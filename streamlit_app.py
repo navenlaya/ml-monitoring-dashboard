@@ -34,6 +34,9 @@ with col2:
     st.subheader("Confidence Over Time")
     st.line_chart(df.set_index('timestamp')["confidence"])
 
+    st.subheader("Prediction Error Over Time")
+    st.line_chart(df.set_index('timestamp')["error"]) 
+
 # Display the latest predictions
 st.subheader("Latest Predictions")
 st.dataframe(df.sort_values("timestamp", ascending=False).head(10))
