@@ -25,6 +25,7 @@ class HouseData(BaseModel):
     AveOccup: float
     Latitude: float
     Longitude: float
+    actual_prices: float
 
 # Prediction route
 @app.post("/predict")
@@ -36,6 +37,7 @@ def predict(data: HouseData):
 
     # Predict
     prediction = model.predict(input_data)[0]
+    error = round(abs(prediction - data.actual_prices), 3)
     confidence = max(0.0, min(1.0, 1 - abs(prediction - 2.0) / 5))
 
     # Prepare log entry
@@ -51,7 +53,9 @@ def predict(data: HouseData):
         data.Latitude,
         data.Longitude,
         round(prediction, 3),
-        round(confidence, 3)
+        round(confidence, 3),
+        round(data.actual_prices, 3),
+        error
     ]
 
     # Write log to CSV
@@ -62,12 +66,14 @@ def predict(data: HouseData):
             writer.writerow([
                 "timestamp", "MedInc", "HouseAge", "AveRooms", "AveBedrms",
                 "Population", "AveOccup", "Latitude", "Longitude",
-                "prediction", "confidence"
+                "prediction", "confidence", "actual_prices", "error"
             ])
         writer.writerow(log_entry)
 
     # Return result
     return {
         "predicted_price": round(prediction, 3),
-        "confidence": round(confidence, 3)
+        "confidence": round(confidence, 3),
+        "actual_prices": round(data.actual_prices, 3),
+        "error": error
     }
