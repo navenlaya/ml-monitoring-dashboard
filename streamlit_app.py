@@ -2,6 +2,7 @@ import streamlit as st
 from streamlit_autorefresh import st_autorefresh
 import pandas as pd
 import os
+import numpy as np
 
 # Page Config
 st.set_page_config(page_title="ML Monitoring Dashboard", layout="wide")
@@ -22,6 +23,14 @@ if not os.path.exists(log_path):
 # Read the log file
 df = pd.read_csv(log_path)
 df['timestamp'] = pd.to_datetime(df['timestamp'])
+
+# KPIs
+latest = df.sort_values("timestamp").ilog[-1]
+avg_conf = df['confidence'].mean()
+avg_error = df['error'].mean()
+total_preddictions = len(df)
+
+k1, k2, k3 = st.columns(3)
 
 # Layout
 col1, col2 = st.columns(2)
