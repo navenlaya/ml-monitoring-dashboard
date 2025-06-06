@@ -25,14 +25,19 @@ df = pd.read_csv(log_path)
 df['timestamp'] = pd.to_datetime(df['timestamp'])
 
 # KPIs
-latest = df.sort_values("timestamp").ilog[-1]
+latest = df.sort_values("timestamp").iloc[-1]
 avg_conf = df['confidence'].mean()
 avg_error = df['error'].mean()
 total_preddictions = len(df)
 
 k1, k2, k3 = st.columns(3)
+k1.metric("Latest Prediction", latest['prediction'])
+k2.metric("Average Confidence", f"{avg_conf:.2f}")
+k3.metric("Average Error", f"{avg_error:.2f}")
 
-# Layout
+st.divider()
+
+# Layout/Charts
 col1, col2 = st.columns(2)
 
 with col1:
@@ -43,10 +48,11 @@ with col2:
     st.subheader("Confidence Over Time")
     st.line_chart(df.set_index('timestamp')["confidence"])
 
-    st.subheader("Prediction Error Over Time")
-    st.line_chart(df.set_index('timestamp')["error"]) 
+st.subheader("Prediction Error Over Time")
+st.line_chart(df.set_index('timestamp')["error"]) 
 
 # Display the latest predictions
+st.divider()
 st.subheader("Latest Predictions")
 st.dataframe(df.sort_values("timestamp", ascending=False).head(10))
 
