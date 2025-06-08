@@ -21,10 +21,10 @@ A full-stack project that deploys a machine learning model with a real-time moni
 
 ## How to Run
 
-- **1** python train_model.py
-- **2** uvicron api.main:app --reload
-- **3** python simulate_requests.py
-- **4** streamlit run streamlit_app.py
+- **1.** python train_model.py
+- **2.** uvicron api.main:app --reload
+- **3.** python simulate_requests.py
+- **4.** streamlit run streamlit_app.py
 
 ## Demo
-![alt text](<Screencast from 2025-06-07 21-34-49.webm.gif>)
+![alt text](<assets/Screencast from 2025-06-07 21-34-49.webm.gif>)
