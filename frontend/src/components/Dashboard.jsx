@@ -1,60 +1,90 @@
-// Import React and necessary hooks
 import React, { useEffect, useState } from 'react';
-// Import Line chart from react-chartjs-2
 import { Line } from 'react-chartjs-2';
-// Import CSV file fetcher function
 import { getPredictions } from '../api';
-// Import PapaParse for parsing CSV
 import Papa from 'papaparse';
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  Title,
+  Tooltip,
+  Legend
+} from 'chart.js';
+
+// Register required chart.js components
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  Title,
+  Tooltip,
+  Legend
+);
 
 const Dashboard = () => {
-  // State to store parsed CSV data
   const [data, setData] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  // Fetch and parse the CSV file
+  // Fetch predictions.csv and parse it using PapaParse
   const fetchData = async () => {
-    const rawCSV = await getPredictions(); // Get CSV text from public/logs
-    Papa.parse(rawCSV, {
-      header: true, // Use the first row as headers
-      complete: (results) => {
-        // Filter out rows with missing timestamp values
-        setData(results.data.filter(row => row.timestamp));
-      }
-    });
+    try {
+      const rawCSV = await getPredictions();
+      Papa.parse(rawCSV, {
+        header: true,
+        skipEmptyLines: true,
+        complete: (results) => {
+          const filtered = results.data.filter(row => row.timestamp);
+          setData(filtered);
+          setLoading(false);
+        }
+      });
+    } catch (err) {
+      console.error('Failed to load CSV:', err);
+      setError('Could not load dashboard data');
+      setLoading(false);
+    }
   };
 
-  // Run fetchData on mount and set an interval to refetch every 5 seconds
   useEffect(() => {
-    fetchData(); // Initial load
-    const interval = setInterval(fetchData, 5000); // Re-fetch every 5s
-    return () => clearInterval(interval); // Cleanup on unmount
+    fetchData(); // Initial fetch
+    const interval = setInterval(fetchData, 5000); // Refresh every 5s
+    return () => clearInterval(interval);
   }, []);
 
-  // Generate chart data for a given key (e.g., prediction, confidence, error)
-  const getChartData = (key) => ({
-    labels: data.map(d => d.timestamp), // Use timestamps as x-axis labels
+  // Reusable chart generator
+  const getChartData = (labelKey, color) => ({
+    labels: data.map(d => new Date(d.timestamp).toLocaleTimeString()),
     datasets: [
       {
-        label: key, // e.g., 'prediction'
-        data: data.map(d => parseFloat(d[key])), // Convert values to float
-        fill: false,
-        borderColor: 'blue', // Chart line color
-      },
-    ],
+        label: labelKey,
+        data: data.map(d => parseFloat(d[labelKey])),
+        borderColor: color,
+        backgroundColor: 'transparent',
+        tension: 0.3,
+      }
+    ]
   });
 
-  // Render multiple line charts for prediction, confidence, and error
+  // Conditional rendering
+  if (loading) return <p>Loading dashboard...</p>;
+  if (error) return <p style={{ color: 'red' }}>{error}</p>;
+  if (data.length === 0) return <p>No data available yet.</p>;
+
   return (
-    <>
+    <div>
       <h2>Prediction Over Time</h2>
-      <Line data={getChartData('prediction')} />
+      <Line data={getChartData('prediction', 'blue')} />
 
       <h2>Confidence Over Time</h2>
-      <Line data={getChartData('confidence')} />
+      <Line data={getChartData('confidence', 'green')} />
 
       <h2>Error Over Time</h2>
-      <Line data={getChartData('error')} />
-    </>
+      <Line data={getChartData('error', 'red')} />
+    </div>
   );
 };
 
