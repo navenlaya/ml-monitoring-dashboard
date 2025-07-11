@@ -15,7 +15,7 @@ app = FastAPI(title="ML Monitoring Inference API")
 # Cors for React frontend
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],  # Allows all origins, adjust as needed for production
+    allow_origins=["http://localhost:5173"],  # Allows all origins, adjust as needed for production
     allow_credentials=True,
     allow_methods=["*"],  # Allows all methods (GET, POST, etc.)
     allow_headers=["*"],  # Allows all headers
