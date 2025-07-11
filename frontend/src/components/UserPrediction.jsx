@@ -76,9 +76,10 @@ const UserPrediction = () => {
       {prediction && (
         <div style={{ marginTop: '20px' }}>
           <h3>📈 Prediction Results</h3>
-          <p><strong>Estimated Price:</strong> ${prediction.price?.toFixed(2)}</p>
-          {prediction.mae && <p><strong>Model MAE:</strong> ${prediction.mae.toFixed(2)}</p>}
-          {prediction.rmse && <p><strong>Model RMSE:</strong> ${prediction.rmse.toFixed(2)}</p>}
+          <p><strong>Estimated Price:</strong> ${prediction.predicted_price?.toFixed(2)}</p>
+          <p><strong>Confidence:</strong> {prediction.confidence}</p>
+          <p><strong>Actual Price:</strong> ${prediction.actual_prices}</p>
+          <p><strong>Prediction Error:</strong> {prediction.error}</p>
         </div>
       )}
 
