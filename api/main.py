@@ -7,8 +7,20 @@ import csv
 import os
 from datetime import datetime
 
+from fastapi.middleware.cors import CORSMiddleware
+
 # Define the FastAPI app
 app = FastAPI(title="ML Monitoring Inference API")
+
+# Cors for React frontend
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:3000"],  # Allows all origins, adjust as needed for production
+    allow_credentials=True,
+    allow_methods=["*"],  # Allows all methods (GET, POST, etc.)
+    allow_headers=["*"],  # Allows all headers
+
+)
 
 # Load the model with an absolute path to avoid loading errors
 model_path = os.path.join(os.path.dirname(__file__), "..", "model", "model.pkl")
