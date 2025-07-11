@@ -1,4 +1,3 @@
-// src/App.jsx
 import React from 'react';
 import { Routes, Route } from 'react-router-dom';
 import UserPrediction from './components/UserPrediction';
@@ -7,7 +6,7 @@ import ProtectedAdmin from './components/ProtectedAdmin';
 /**
  * Main routing setup:
  * - "/" renders the public user prediction form
- * - "/admin" renders a password-protected dashboard for developers
+ * - "/admin" renders a password-protected dashboard for developer
  */
 const App = () => {
   return (
