@@ -15,7 +15,8 @@ const UserPrediction = () => {
     Population: '',
     AveOccup: '',
     Latitude: '',
-    Longitude: ''
+    Longitude: '',
+    actual_prices: ''
   });
 
   // State to hold prediction result and any model error metrics
