@@ -15,7 +15,7 @@ A full-stack project that deploys a machine learning model with a real-time moni
 - **Backend:** FastAPI, Joblib
 - **Frontend:** Streamlit
 - **ML:** scikit-learn
-- **Visualization:** Streamlit Charts
+- **Visualization:** Vite + React
 - **Logging:** CSV-based real-time logging
 - **Others:** Python, Pandas, NumPy
 
@@ -23,8 +23,6 @@ A full-stack project that deploys a machine learning model with a real-time moni
 
 - **1.** python train_model.py
 - **2.** uvicron api.main:app --reload
-- **3.** python simulate_requests.py
-- **4.** streamlit run streamlit_app.py
+- **3.** python simulate_requests.py (For simulating real-time users)
+- **4.** npm run dev
 
-## Demo
-![alt text](<assets/Screencast from 2025-06-07 21-34-49.webm.gif>)
