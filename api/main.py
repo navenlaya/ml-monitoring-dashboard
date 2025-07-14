@@ -91,6 +91,7 @@ def predict(data: HouseData):
         "error": error
     }
 
+# Route to get the predicton log
 @app.get("/logs/predictions.csv")
 def get_prediction_log():
     log_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "logs", "predictions.csv"))
