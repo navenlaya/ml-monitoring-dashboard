@@ -6,6 +6,7 @@ import numpy as np
 import csv
 import os
 from datetime import datetime
+from fastapi.responses import FileResponse
 
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -89,3 +90,10 @@ def predict(data: HouseData):
         "actual_prices": round(data.actual_prices, 3),
         "error": error
     }
+
+@app.get("/logs/predictions.csv")
+def get_prediction_log():
+    log_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "logs", "predictions.csv"))
+    if os.path.exists(log_path):
+        return FileResponse(log_path, media_type='text/csv', filename='predictions.csv')
+    return {"error": "Log file not found."}
