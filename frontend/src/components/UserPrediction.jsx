@@ -49,7 +49,7 @@ const UserPrediction = () => {
 
   return (
     <div style={{ padding: '40px', maxWidth: '600px', margin: 'auto' }}>
-      <h2>🏠 California Home Price Prediction</h2>
+      <h2>California Home Price Prediction</h2>
       <p>Enter property details to get a price estimate:</p>
 
       <form onSubmit={handleSubmit}>
@@ -72,10 +72,10 @@ const UserPrediction = () => {
         <button type="submit">Predict Price</button>
       </form>
 
-      {/* Display the result or error */}
+      {/* Display the result or error. Takes from */}
       {prediction && (
         <div style={{ marginTop: '20px' }}>
-          <h3>📈 Prediction Results</h3>
+          <h3> Prediction Results</h3>
           <p><strong>Estimated Price:</strong> ${prediction.predicted_price?.toFixed(2)}</p>
           <p><strong>Confidence:</strong> {prediction.confidence}</p>
           <p><strong>Actual Price:</strong> ${prediction.actual_prices}</p>
