@@ -38,8 +38,7 @@ for i, row in df.iterrows():
         "Population": row['Population'],
         "AveOccup": row['AveOccup'],
         "Latitude": row['Latitude'],
-        "Longitude": row['Longitude'],
-        "actual_prices": row["actual_prices"]
+        "Longitude": row['Longitude']
     }
 
     try:
