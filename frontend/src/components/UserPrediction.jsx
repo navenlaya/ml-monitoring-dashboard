@@ -1,5 +1,11 @@
 import React, { useState } from 'react';
 import axios from 'axios';
+import Paper from '@mui/material/Paper';
+import Typography from '@mui/material/Typography';
+import TextField from '@mui/material/TextField';
+import Button from '@mui/material/Button';
+import Grid from '@mui/material/Grid';
+import Box from '@mui/material/Box';
 
 /**
  * This component renders a form that allows users to input housing data
@@ -15,8 +21,7 @@ const UserPrediction = () => {
     Population: '',
     AveOccup: '',
     Latitude: '',
-    Longitude: '',
-    actual_prices: ''
+    Longitude: ''
   });
 
   // State to hold prediction result and any model error metrics
@@ -48,43 +53,42 @@ const UserPrediction = () => {
   };
 
   return (
-    <div style={{ padding: '40px', maxWidth: '600px', margin: 'auto' }}>
-      <h2>California Home Price Prediction</h2>
-      <p>Enter property details to get a price estimate:</p>
-
-      <form onSubmit={handleSubmit}>
-        {Object.keys(formData).map((key) => (
-          <div key={key} style={{ marginBottom: '10px' }}>
-            <label>
-              {key}:
-              <input
-                type="number"
+    <Paper elevation={3} sx={{ p: { xs: 2, sm: 4 }, width: '100%', height: '100%', boxSizing: 'border-box', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+      <Typography variant="h4" gutterBottom>California Home Price Prediction</Typography>
+      <Typography variant="body1" gutterBottom>Enter property details to get a price estimate:</Typography>
+      <Box component="form" onSubmit={handleSubmit} sx={{ mt: 2 }}>
+        <Grid container spacing={2}>
+          {Object.keys(formData).map((key) => (
+            <Grid item xs={12} sm={6} key={key}>
+              <TextField
+                label={key}
                 name={key}
                 value={formData[key]}
                 onChange={handleChange}
-                step="any"
+                type="number"
+                fullWidth
                 required
-                style={{ marginLeft: '10px', width: '100%' }}
+                variant="outlined"
+                size="small"
               />
-            </label>
-          </div>
-        ))}
-        <button type="submit">Predict Price</button>
-      </form>
-
+            </Grid>
+          ))}
+          <Grid item xs={12}>
+            <Button type="submit" variant="contained" color="primary" fullWidth sx={{ py: 1.5 }}>
+              Predict Price
+            </Button>
+          </Grid>
+        </Grid>
+      </Box>
       {/* Display the result or error. Takes from */}
       {prediction && (
-        <div style={{ marginTop: '20px' }}>
-          <h3> Prediction Results</h3>
-          <p><strong>Estimated Price:</strong> ${prediction.predicted_price?.toFixed(2)}</p>
-          <p><strong>Confidence:</strong> {prediction.confidence}</p>
-          <p><strong>Actual Price:</strong> ${prediction.actual_prices}</p>
-          <p><strong>Prediction Error:</strong> {prediction.error}</p>
-        </div>
+        <Paper elevation={2} sx={{ mt: 4, p: 2, background: '#f0f7fa' }}>
+          <Typography variant="h6" gutterBottom>Prediction Results</Typography>
+          <Typography><strong>Estimated Price:</strong> ${prediction.predicted_price?.toFixed(2)}</Typography>
+        </Paper>
       )}
-
-      {error && <p style={{ color: 'red', marginTop: '20px' }}>{error}</p>}
-    </div>
+      {error && <Typography color="error" sx={{ mt: 2 }}>{error}</Typography>}
+    </Paper>
   );
 };
 
