@@ -51,9 +51,9 @@ def predict(data: HouseData):
     # Predict
     prediction = model.predict(input_data)[0]
 
-    # Calculate confidence (still simulated for now)
-    confidence = np.random.uniform(0.7, 1.0)
-
+    # Calculate confidence based on error (higher error = lower confidence)
+    confidence = ''
+    max_error = 5.0
     # Estimate error by finding the closest row in data/simulated_stream.csv
     error = ''
     try:
@@ -67,9 +67,12 @@ def predict(data: HouseData):
             idx = np.argmin(dists)
             closest_actual = df_clean.iloc[idx]["actual_prices"]
             if pd.notnull(closest_actual):
-                error = round(abs(prediction - float(closest_actual)), 3)
+                error_val = abs(prediction - float(closest_actual))
+                error = round(error_val, 3)
+                confidence = max(0.0, min(1.0, 1 - (error_val / max_error)))
     except Exception as e:
         error = ''
+        confidence = ''
 
     # Prepare log entry
     log_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "logs", "predictions.csv"))
@@ -84,8 +87,8 @@ def predict(data: HouseData):
         data.Latitude,
         data.Longitude,
         round(prediction, 3),
-        round(confidence, 3),
-        error
+        round(confidence, 3) if isinstance(confidence, float) else '',
+        round(error, 3) if isinstance(error, float) else ''
     ]
 
     # Write log to CSV
