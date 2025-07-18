@@ -7,6 +7,7 @@ import csv
 import os
 from datetime import datetime
 from fastapi.responses import FileResponse
+from scipy.spatial import distance
 
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -38,7 +39,6 @@ class HouseData(BaseModel):
     AveOccup: float
     Latitude: float
     Longitude: float
-    actual_prices: float
 
 # Prediction route
 @app.post("/predict")
@@ -50,8 +50,26 @@ def predict(data: HouseData):
 
     # Predict
     prediction = model.predict(input_data)[0]
-    error = round(abs(prediction - data.actual_prices), 3)
-    confidence = max(0.0, min(1.0, 1 - abs(prediction - 2.0) / 5))
+
+    # Calculate confidence (still simulated for now)
+    confidence = np.random.uniform(0.7, 1.0)
+
+    # Estimate error by finding the closest row in data/simulated_stream.csv
+    error = ''
+    try:
+        df = pd.read_csv(os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "data", "simulated_stream.csv")))
+        feature_cols = ["MedInc", "HouseAge", "AveRooms", "AveBedrms", "Population", "AveOccup", "Latitude", "Longitude"]
+        df_clean = df.dropna(subset=feature_cols + ["actual_prices"])
+        if not df_clean.empty:
+            X = df_clean[feature_cols].values.astype(float)
+            input_vec = np.array([data.MedInc, data.HouseAge, data.AveRooms, data.AveBedrms, data.Population, data.AveOccup, data.Latitude, data.Longitude], dtype=float)
+            dists = np.linalg.norm(X - input_vec, axis=1)
+            idx = np.argmin(dists)
+            closest_actual = df_clean.iloc[idx]["actual_prices"]
+            if pd.notnull(closest_actual):
+                error = round(abs(prediction - float(closest_actual)), 3)
+    except Exception as e:
+        error = ''
 
     # Prepare log entry
     log_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "logs", "predictions.csv"))
@@ -67,7 +85,6 @@ def predict(data: HouseData):
         data.Longitude,
         round(prediction, 3),
         round(confidence, 3),
-        round(data.actual_prices, 3),
         error
     ]
 
@@ -79,16 +96,13 @@ def predict(data: HouseData):
             writer.writerow([
                 "timestamp", "MedInc", "HouseAge", "AveRooms", "AveBedrms",
                 "Population", "AveOccup", "Latitude", "Longitude",
-                "prediction", "confidence", "actual_prices", "error"
+                "prediction", "confidence", "error"
             ])
         writer.writerow(log_entry)
 
-    # Return result
+    # Return result (only predicted_price)
     return {
-        "predicted_price": round(prediction, 3),
-        "confidence": round(confidence, 3),
-        "actual_prices": round(data.actual_prices, 3),
-        "error": error
+        "predicted_price": round(prediction, 3)
     }
 
 # Route to get the predicton log
