@@ -8,14 +8,14 @@ A full-stack project that deploys a machine learning model with a real-time moni
 - REST API using FastAPI to serve real-time predictions
 - Simulated user requests from test data using a custom script
 - Logged predictions, confidence, actual values, and errors
-- Interactive Streamlit dashboard with live-updating visualizations
+- Interactive React + Vite dashboard with live-updating visualizations
 
 ## Tech Stack
 
 - **Backend:** FastAPI, Joblib
 - **Frontend:** Streamlit
 - **ML:** scikit-learn
-- **Visualization:** Vite + React
+- **Visualization:** React + Vite
 - **Logging:** CSV-based real-time logging
 - **Others:** Python, Pandas, NumPy
 
