@@ -26,6 +26,6 @@ logs/
 __pycache__/
 *.pyc
 *.pkl
-.env/
+env/
 
 node_modules
