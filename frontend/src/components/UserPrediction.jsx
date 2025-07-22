@@ -3,6 +3,7 @@ import axios from 'axios';
 import Paper from '@mui/material/Paper';
 import Typography from '@mui/material/Typography';
 import TextField from '@mui/material/TextField';
+import Tooltip from '@mui/material/Tooltip';
 import Button from '@mui/material/Button';
 import Grid from '@mui/material/Grid';
 import Box from '@mui/material/Box';
@@ -52,6 +53,18 @@ const UserPrediction = () => {
     }
   };
 
+  // User-friendly labels and tooltips for each field
+  const fieldMeta = {
+    MedInc: { label: 'Median Income', tip: 'Median income in block group (in $10,000s)' },
+    HouseAge: { label: 'House Age', tip: 'Median house age in years' },
+    AveRooms: { label: 'Average Rooms', tip: 'Average number of rooms per household' },
+    AveBedrms: { label: 'Average Bedrooms', tip: 'Average number of bedrooms per household' },
+    Population: { label: 'Population', tip: 'Population of the block group' },
+    AveOccup: { label: 'Average Occupancy', tip: 'Average number of household members' },
+    Latitude: { label: 'Latitude', tip: 'Latitude coordinate' },
+    Longitude: { label: 'Longitude', tip: 'Longitude coordinate' },
+  };
+
   return (
     <Paper elevation={3} sx={{ p: { xs: 2, sm: 4 }, width: '100%', height: '100%', boxSizing: 'border-box', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
       <Typography variant="h4" gutterBottom>California Home Price Prediction</Typography>
@@ -60,17 +73,19 @@ const UserPrediction = () => {
         <Grid container spacing={2}>
           {Object.keys(formData).map((key) => (
             <Grid item xs={12} sm={6} key={key}>
-              <TextField
-                label={key}
-                name={key}
-                value={formData[key]}
-                onChange={handleChange}
-                type="number"
-                fullWidth
-                required
-                variant="outlined"
-                size="small"
-              />
+              <Tooltip title={fieldMeta[key]?.tip || ''} arrow placement="top">
+                <TextField
+                  label={fieldMeta[key]?.label || key}
+                  name={key}
+                  value={formData[key]}
+                  onChange={handleChange}
+                  type="number"
+                  fullWidth
+                  required
+                  variant="outlined"
+                  size="small"
+                />
+              </Tooltip>
             </Grid>
           ))}
           <Grid item xs={12}>
