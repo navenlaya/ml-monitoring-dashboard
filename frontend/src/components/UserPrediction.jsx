@@ -7,6 +7,13 @@ import Tooltip from '@mui/material/Tooltip';
 import Button from '@mui/material/Button';
 import Grid from '@mui/material/Grid';
 import Box from '@mui/material/Box';
+import InputAdornment from '@mui/material/InputAdornment';
+import AttachMoneyIcon from '@mui/icons-material/AttachMoney';
+import HomeIcon from '@mui/icons-material/Home';
+import PeopleIcon from '@mui/icons-material/People';
+import BedIcon from '@mui/icons-material/Bed';
+import PublicIcon from '@mui/icons-material/Public';
+import LocationOnIcon from '@mui/icons-material/LocationOn';
 
 /**
  * This component renders a form that allows users to input housing data
@@ -65,6 +72,18 @@ const UserPrediction = () => {
     Longitude: { label: 'Longitude', tip: 'Longitude coordinate' },
   };
 
+  // Input adornments for each field
+  const fieldAdornments = {
+    MedInc: { startAdornment: <InputAdornment position="start"><AttachMoneyIcon fontSize="small" /></InputAdornment> },
+    HouseAge: { endAdornment: <InputAdornment position="end">yrs</InputAdornment> },
+    AveRooms: { startAdornment: <InputAdornment position="start"><HomeIcon fontSize="small" /></InputAdornment> },
+    AveBedrms: { startAdornment: <InputAdornment position="start"><BedIcon fontSize="small" /></InputAdornment> },
+    Population: { startAdornment: <InputAdornment position="start"><PeopleIcon fontSize="small" /></InputAdornment> },
+    AveOccup: { endAdornment: <InputAdornment position="end">/hh</InputAdornment> },
+    Latitude: { startAdornment: <InputAdornment position="start"><PublicIcon fontSize="small" /></InputAdornment> },
+    Longitude: { startAdornment: <InputAdornment position="start"><LocationOnIcon fontSize="small" /></InputAdornment> },
+  };
+
   return (
     <Paper elevation={3} sx={{ p: { xs: 2, sm: 4 }, width: '100%', height: '100%', boxSizing: 'border-box', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
       <Typography variant="h4" gutterBottom>California Home Price Prediction</Typography>
@@ -84,6 +103,7 @@ const UserPrediction = () => {
                   required
                   variant="outlined"
                   size="small"
+                  InputProps={fieldAdornments[key]}
                 />
               </Tooltip>
             </Grid>
