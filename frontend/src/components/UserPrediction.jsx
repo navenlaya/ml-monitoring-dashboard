@@ -14,6 +14,11 @@ import PeopleIcon from '@mui/icons-material/People';
 import BedIcon from '@mui/icons-material/Bed';
 import PublicIcon from '@mui/icons-material/Public';
 import LocationOnIcon from '@mui/icons-material/LocationOn';
+import CircularProgress from '@mui/material/CircularProgress';
+import Card from '@mui/material/Card';
+import CardContent from '@mui/material/CardContent';
+import CardHeader from '@mui/material/CardHeader';
+import RestartAltIcon from '@mui/icons-material/RestartAlt';
 
 /**
  * This component renders a form that allows users to input housing data
@@ -58,6 +63,21 @@ const UserPrediction = () => {
       setError('Prediction failed. Please try again.');
       setPrediction(null);
     }
+  };
+
+  const handleReset = () => {
+    setFormData({
+      MedInc: '',
+      HouseAge: '',
+      AveRooms: '',
+      AveBedrms: '',
+      Population: '',
+      AveOccup: '',
+      Latitude: '',
+      Longitude: ''
+    });
+    setPrediction(null);
+    setError(null);
   };
 
   // User-friendly labels and tooltips for each field
@@ -108,19 +128,29 @@ const UserPrediction = () => {
               </Tooltip>
             </Grid>
           ))}
-          <Grid item xs={12}>
+          <Grid item xs={12} sm={6}>
             <Button type="submit" variant="contained" color="primary" fullWidth sx={{ py: 1.5 }}>
               Predict Price
+            </Button>
+          </Grid>
+          <Grid item xs={12} sm={6}>
+            <Button onClick={handleReset} variant="outlined" color="secondary" fullWidth sx={{ py: 1.5 }} startIcon={<RestartAltIcon />}>
+              Reset
             </Button>
           </Grid>
         </Grid>
       </Box>
       {/* Display the result or error. Takes from */}
       {prediction && (
-        <Paper elevation={2} sx={{ mt: 4, p: 2, background: '#f0f7fa' }}>
-          <Typography variant="h6" gutterBottom>Prediction Results</Typography>
-          <Typography><strong>Estimated Price:</strong> ${prediction.predicted_price?.toFixed(2)}</Typography>
-        </Paper>
+        <Card elevation={4} sx={{ mt: 4, mx: 'auto', maxWidth: 400, background: '#e3f2fd', borderRadius: 3 }}>
+          <CardHeader title="Prediction Result" sx={{ textAlign: 'center', bgcolor: '#1976d2', color: 'white', borderTopLeftRadius: 12, borderTopRightRadius: 12 }} />
+          <CardContent>
+            <Typography variant="h5" align="center" gutterBottom sx={{ fontWeight: 'bold', fontSize: '2.5rem', color: '#1976d2' }}>
+              ${prediction.predicted_price?.toFixed(2)}
+            </Typography>
+            <Typography align="center" color="text.secondary">Estimated Home Price</Typography>
+          </CardContent>
+        </Card>
       )}
       {error && <Typography color="error" sx={{ mt: 2 }}>{error}</Typography>}
     </Paper>
