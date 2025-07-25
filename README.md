@@ -13,7 +13,7 @@ A full-stack project that deploys a machine learning model with a real-time moni
 ## Tech Stack
 
 - **Backend:** FastAPI, Joblib
-- **Frontend:** Streamlit
+- **Frontend:** Streamlit, React + Vite
 - **ML:** scikit-learn
 - **Visualization:** React + Vite
 - **Logging:** CSV-based real-time logging
