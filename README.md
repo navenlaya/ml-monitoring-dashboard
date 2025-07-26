@@ -1,6 +1,6 @@
 # Real-Time ML Monitoring Dashboard
 
-A full-stack project that deploys a machine learning model with a real-time monitoring dashboard. The system simulates live user input and visualizes predictions, confidence scores, and prediction errors — all in real time.
+A full-stack project that deploys a machine learning model with a real-time monitoring dashboard. The system simulates live user input and visualizes predictions, confidence scores, and prediction errors all in real time.
 
 ## Features
 
@@ -13,9 +13,8 @@ A full-stack project that deploys a machine learning model with a real-time moni
 ## Tech Stack
 
 - **Backend:** FastAPI, Joblib
-- **Frontend:** Streamlit, React + Vite
+- **Frontend:** React + Vite
 - **ML:** scikit-learn
-- **Visualization:** React + Vite
 - **Logging:** CSV-based real-time logging
 - **Others:** Python, Pandas, NumPy
 
