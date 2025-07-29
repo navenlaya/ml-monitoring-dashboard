@@ -1,31 +1,132 @@
 # Python
 __pycache__/
 *.py[cod]
+*$py.class
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+*.whl
+
+# Virtual environments
+env/
+venv/
+ENV/
+.env
+.venv
+
+# ML and Data Science
 *.pkl
 *.joblib
+*.h5
+*.model
+*.weights
+*.onnx
+*.pb
 
-# Virtual environment
-venv/
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+database/
+ml_monitoring.db
 
-# Jupyter
+# Jupyter Notebook
 .ipynb_checkpoints/
+*.ipynb
 
-# Data files
+# Data files (uncomment if you don't want to track data)
 # *.csv
+# *.json
+# *.parquet
 # data/
-
-# VSCode or IDE
-.vscode/
-.idea/
-
-# OS
-.DS_Store
 
 # Logs and temporary files
 logs/
-__pycache__/
-*.pyc
-*.pkl
-env/
+*.log
+*.out
+*.err
+*.access.log
+*.error.log
 
-node_modules
+# Docker
+.docker/
+docker-compose.override.yml
+.dockerignore.local
+
+# IDE and Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Node.js (for frontend dependencies at root level)
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Environment variables
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+.env.docker
+.env.production
+
+# Coverage reports
+htmlcov/
+.coverage
+.coverage.*
+coverage.xml
+*.cover
+.hypothesis/
+
+# pytest
+.pytest_cache/
+
+# mypy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Monitoring and Analytics
+monitoring/
+analytics/
+metrics/
+
+# SSL certificates
+ssl/
+certs/
+*.pem
+*.key
+*.crt
+
+# Backup files
+*.backup
+*.bak
+*.tmp
+*.temp
+
+# Runtime files
+*.pid
+*.lock
+run/
+tmp/
+
+# Local configuration overrides
+config.local.json
+settings.local.js
+local_settings.py
