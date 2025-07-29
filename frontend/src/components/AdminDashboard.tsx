@@ -37,7 +37,7 @@ import {
 } from 'chart.js';
 import Papa from 'papaparse';
 
-import { getPredictions } from '../api';
+import { getDashboardStats, getPredictionsTimeline, getActiveAlerts } from '../api';
 import { PredictionLog, LoadingState, DashboardStats } from '../types';
 
 // Register Chart.js components
@@ -63,7 +63,7 @@ interface ChartData {
   formattedTime: string;
 }
 
-const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
+const AdminDashboard: React.FC<AdminDashboardProps> = React.memo(({ onLogout }) => {
   const theme = useTheme();
   
   const [data, setData] = useState<PredictionLog[]>([]);
@@ -72,41 +72,58 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
   const [error, setError] = useState<string>('');
   const [lastUpdate, setLastUpdate] = useState<Date>(new Date());
 
-  // Fetch and parse predictions.csv
+  // Fetch data from new database API with scroll preservation
   const fetchData = useCallback(async () => {
+    // Preserve scroll position during updates
+    const scrollY = window.scrollY;
+    
+    // Only show loading on first load, not on updates
+    if (data.length === 0) {
+      setLoadingState('loading');
+    }
+    setError('');
+
     try {
-      setError('');
-      const rawCSV = await getPredictions();
+      // Fetch data from the new database API endpoints
+      const [timelineData, dashboardStats, alerts] = await Promise.all([
+        getPredictionsTimeline(24, 50),
+        getDashboardStats(24),
+        getActiveAlerts(10)
+      ]);
       
-      Papa.parse(rawCSV, {
-        header: true,
-        skipEmptyLines: true,
-        complete: (results: any) => {
-          const validData = results.data
-            .filter((row: any) => row.timestamp)
-            .slice(-50) as PredictionLog[]; // Keep only last 50 entries
-          
-          setData(validData);
-          setLastUpdate(new Date());
-          setLoadingState('success');
-        },
-        error: (parseError: any) => {
-          console.error('CSV parsing error:', parseError);
-          setError('Failed to parse prediction data');
-          setLoadingState('error');
-        },
+      // Convert timeline data to the format expected by the dashboard
+      const validData = timelineData.map((item: any) => ({
+        timestamp: item.timestamp,
+        prediction: item.predicted_price?.toString() || '',
+        confidence: item.confidence?.toString() || '',
+        error: item.error?.toString() || '',
+        actual_price: item.actual_price?.toString() || ''
+      })) as PredictionLog[];
+      
+      setData(validData);
+      setLastUpdate(new Date());
+      setLoadingState('success');
+      
+      // Store additional stats for use in other parts of the component
+      (window as any).dashboardStats = dashboardStats;
+      (window as any).activeAlerts = alerts;
+      
+      // Restore scroll position after update
+      requestAnimationFrame(() => {
+        window.scrollTo(0, scrollY);
       });
+      
     } catch (err: any) {
       console.error('Failed to fetch data:', err);
       setError(err.message || 'Failed to fetch prediction data');
       setLoadingState('error');
     }
-  }, []);
+  }, [data.length]);
 
-  // Initial fetch and set up interval
+  // Initial fetch and set up interval with smooth updates
   useEffect(() => {
     fetchData();
-    const interval = setInterval(fetchData, 5000);
+    const interval = setInterval(fetchData, 10000); // Slower updates (10s) for smoother experience
     return () => clearInterval(interval);
   }, [fetchData]);
 
@@ -127,6 +144,28 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
 
   // Calculate dashboard statistics
   const stats: DashboardStats = useMemo(() => {
+    // Use backend-provided stats if available, otherwise calculate from frontend data
+    const backendStats = (window as any).dashboardStats;
+    
+    if (backendStats) {
+      // Use backend statistics for accurate data
+      const uptimeHours = backendStats.uptime_hours || 0;
+      const uptimeSeconds = Math.floor(uptimeHours * 3600);
+      const uptimeFormatted = uptimeHours >= 1 
+        ? `${Math.floor(uptimeHours)}h ${Math.floor((uptimeHours % 1) * 60)}m`
+        : uptimeSeconds > 0 
+          ? `${uptimeSeconds}s`
+          : 'Just started';
+      
+      return {
+        totalPredictions: backendStats.total_predictions || 0,
+        averageConfidence: backendStats.average_confidence || 0,
+        averageError: backendStats.average_error || 0,
+        uptime: uptimeFormatted,
+      };
+    }
+
+    // Fallback to frontend calculation if backend stats not available
     if (data.length === 0) {
       return {
         totalPredictions: 0,
@@ -148,26 +187,44 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
       averageError: errors.length > 0 
         ? errors.reduce((a, b) => a + b, 0) / errors.length
         : 0,
-      uptime: `${Math.floor((Date.now() - new Date(data[0]?.timestamp || Date.now()).getTime()) / 1000)}s`,
+      uptime: '0s', // Fallback
     };
   }, [data, chartData]);
 
-  // Generate chart data for Chart.js
+  // Generate chart data for Chart.js with smooth transitions
   const getChartData = useCallback((dataKey: keyof Omit<ChartData, 'timestamp' | 'formattedTime'>, label: string, color: string) => ({
     labels: chartData.map(row => row.formattedTime),
     datasets: [{
       label,
       data: chartData.map(row => row[dataKey]),
       borderColor: color,
-      backgroundColor: color + '20',
+      backgroundColor: color + '15', // More subtle background
       fill: true,
       tension: 0.4,
+      borderWidth: 2,
+      pointBackgroundColor: color,
+      pointBorderColor: '#fff',
+      pointBorderWidth: 1,
+      pointRadius: 2,
+      pointHoverRadius: 4,
     }],
   }), [chartData]);
 
   const chartOptions = {
     responsive: true,
     maintainAspectRatio: false,
+    animation: false, // Disable all animations for seamless updates
+    interaction: {
+      intersect: false,
+      mode: 'index' as const,
+    },
+    transitions: {
+      active: {
+        animation: {
+          duration: 0, // No animation on hover
+        }
+      }
+    },
     plugins: {
       legend: {
         position: 'top' as const,
@@ -177,8 +234,27 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
       },
     },
     scales: {
+      x: {
+        display: true,
+        grid: {
+          display: false, // Cleaner look
+        },
+      },
       y: {
         beginAtZero: true,
+        grid: {
+          color: theme.palette.divider,
+          lineWidth: 0.5,
+        },
+      },
+    },
+    elements: {
+      line: {
+        tension: 0.4, // Smooth curves
+      },
+      point: {
+        radius: 3,
+        hoverRadius: 6,
       },
     },
   };
@@ -481,6 +557,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
       )}
     </Box>
   );
-};
+});
+
+AdminDashboard.displayName = 'AdminDashboard';
 
 export default AdminDashboard; 

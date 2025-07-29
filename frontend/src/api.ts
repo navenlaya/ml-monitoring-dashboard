@@ -100,4 +100,65 @@ export const getModelInfo = async (): Promise<{ version: string; accuracy: numbe
   }
 };
 
+// Enhanced API functions for the new database backend
+
+// Dashboard Statistics
+export const getDashboardStats = async (hours: number = 24) => {
+  try {
+    const response = await API.get(`/api/dashboard/stats?hours=${hours}`);
+    return response.data;
+  } catch (error) {
+    throw error as ApiError;
+  }
+};
+
+// Predictions Timeline
+export const getPredictionsTimeline = async (hours: number = 24, limit: number = 100) => {
+  try {
+    const response = await API.get(`/api/predictions/timeline?hours=${hours}&limit=${limit}`);
+    return response.data;
+  } catch (error) {
+    throw error as ApiError;
+  }
+};
+
+// Model Performance Analytics  
+export const getModelPerformance = async (modelVersion: string = 'v1.0', hours: number = 24) => {
+  try {
+    const response = await API.get(`/api/analytics/performance?model_version=${modelVersion}&hours=${hours}`);
+    return response.data;
+  } catch (error) {
+    throw error as ApiError;
+  }
+};
+
+// Prediction Distribution
+export const getPredictionDistribution = async (hours: number = 24, bins: number = 20) => {
+  try {
+    const response = await API.get(`/api/analytics/distribution?hours=${hours}&bins=${bins}`);
+    return response.data;
+  } catch (error) {
+    throw error as ApiError;
+  }
+};
+
+// Alerts
+export const getActiveAlerts = async (limit: number = 50) => {
+  try {
+    const response = await API.get(`/api/alerts?limit=${limit}`);
+    return response.data;
+  } catch (error) {
+    throw error as ApiError;
+  }
+};
+
+export const checkAnomalies = async () => {
+  try {
+    const response = await API.post('/api/alerts/check');
+    return response.data;
+  } catch (error) {
+    throw error as ApiError;
+  }
+};
+
 export default API; 
