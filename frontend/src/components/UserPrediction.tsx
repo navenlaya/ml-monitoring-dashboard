@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useRef } from 'react';
 import {
-  Paper,
+
   Typography,
   TextField,
   Tooltip,
@@ -17,8 +17,8 @@ import {
   IconButton,
   Fade,
   useTheme,
-  Container,
-  Divider,
+
+
 } from '@mui/material';
 import {
   AttachMoney as AttachMoneyIcon,
@@ -30,9 +30,9 @@ import {
   RestartAlt as RestartAltIcon,
   TrendingUp as TrendingUpIcon,
   Close as CloseIcon,
-  Psychology as PsychologyIcon,
-  Update as UpdateIcon,
-  Speed as SpeedIcon,
+
+
+
   KeyboardArrowDown as ArrowDownIcon,
 } from '@mui/icons-material';
 

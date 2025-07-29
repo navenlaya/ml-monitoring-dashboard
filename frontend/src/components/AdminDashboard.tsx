@@ -257,7 +257,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ onLogout }) => {
         <Box sx={{ display: 'flex', gap: 1 }}>
           <IconButton
             onClick={fetchData}
-            disabled={loadingState === 'loading'}
+            disabled={loadingState !== 'idle' && loadingState !== 'success'}
             sx={{
               border: `1px solid ${theme.palette.divider}`,
               '&:hover': {
