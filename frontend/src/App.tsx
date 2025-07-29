@@ -58,7 +58,7 @@ const Navigation: React.FC = () => {
               color: '#fff',
             }}
           >
-            ML Monitoring Dashboard
+            ML Monitoring Dashboard by Naven
           </Typography>
         </Box>
 
