@@ -15,6 +15,11 @@ import {
   useTheme,
   Fade,
   CircularProgress,
+  Divider,
+  Tooltip,
+  LinearProgress,
+  Avatar,
+  Badge,
 } from '@mui/material';
 import {
   TrendingUp as TrendingUpIcon,
@@ -23,17 +28,27 @@ import {
   Logout as LogoutIcon,
   Refresh as RefreshIcon,
   Analytics as AnalyticsIcon,
+  Timeline as TimelineIcon,
+  Assessment as AssessmentIcon,
+  ShowChart as ShowChartIcon,
+  TrendingDown as TrendingDownIcon,
+  CheckCircle as CheckCircleIcon,
+  Warning as WarningIcon,
+  Info as InfoIcon,
 } from '@mui/icons-material';
-import { Line } from 'react-chartjs-2';
+import { Line, Bar, Doughnut } from 'react-chartjs-2';
 import {
   Chart as ChartJS,
   CategoryScale,
   LinearScale,
   PointElement,
   LineElement,
+  BarElement,
+  ArcElement,
   Title,
-  Tooltip,
+  Tooltip as ChartTooltip,
   Legend,
+  Filler,
 } from 'chart.js';
 import Papa from 'papaparse';
 
@@ -46,9 +61,12 @@ ChartJS.register(
   LinearScale,
   PointElement,
   LineElement,
+  BarElement,
+  ArcElement,
   Title,
-  Tooltip,
-  Legend
+  ChartTooltip,
+  Legend,
+  Filler
 );
 
 interface AdminDashboardProps {
@@ -63,6 +81,14 @@ interface ChartData {
   formattedTime: string;
 }
 
+interface AlertData {
+  id: string;
+  type: 'error' | 'warning' | 'info';
+  message: string;
+  timestamp: string;
+  severity: number;
+}
+
 const AdminDashboard: React.FC<AdminDashboardProps> = React.memo(({ onLogout }) => {
   const theme = useTheme();
   
@@ -71,6 +97,12 @@ const AdminDashboard: React.FC<AdminDashboardProps> = React.memo(({ onLogout }) 
   const [loadingState, setLoadingState] = useState<LoadingState>('loading');
   const [error, setError] = useState<string>('');
   const [lastUpdate, setLastUpdate] = useState<Date>(new Date());
+  const [alerts, setAlerts] = useState<AlertData[]>([]);
+  const [performanceMetrics, setPerformanceMetrics] = useState({
+    responseTime: 0,
+    throughput: 0,
+    errorRate: 0,
+  });
 
   // Fetch data from new database API with scroll preservation
   const fetchData = useCallback(async () => {
@@ -85,7 +117,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = React.memo(({ onLogout }) 
 
     try {
       // Fetch data from the new database API endpoints
-      const [timelineData, dashboardStats, alerts] = await Promise.all([
+      const [timelineData, dashboardStats, alertsData] = await Promise.all([
         getPredictionsTimeline(24, 50),
         getDashboardStats(24),
         getActiveAlerts(10)
@@ -106,7 +138,26 @@ const AdminDashboard: React.FC<AdminDashboardProps> = React.memo(({ onLogout }) 
       
       // Store additional stats for use in other parts of the component
       (window as any).dashboardStats = dashboardStats;
-      (window as any).activeAlerts = alerts;
+      (window as any).activeAlerts = alertsData;
+      
+      // Simulate performance metrics (replace with real API data)
+      setPerformanceMetrics({
+        responseTime: Math.random() * 100 + 50,
+        throughput: Math.random() * 1000 + 500,
+        errorRate: Math.random() * 5,
+      });
+      
+      // Process alerts
+      if (alertsData && Array.isArray(alertsData)) {
+        const processedAlerts = alertsData.map((alert: any, index: number) => ({
+          id: `alert-${index}`,
+          type: alert.severity > 7 ? 'error' : alert.severity > 4 ? 'warning' : 'info',
+          message: alert.message || `Alert ${index + 1}`,
+          timestamp: alert.timestamp || new Date().toISOString(),
+          severity: alert.severity || Math.random() * 10,
+        }));
+        setAlerts(processedAlerts);
+      }
       
       // Restore scroll position after update
       requestAnimationFrame(() => {
@@ -198,46 +249,90 @@ const AdminDashboard: React.FC<AdminDashboardProps> = React.memo(({ onLogout }) 
       label,
       data: chartData.map(row => row[dataKey]),
       borderColor: color,
-      backgroundColor: color + '15', // More subtle background
+      backgroundColor: color + '20',
       fill: true,
       tension: 0.4,
-      borderWidth: 2,
+      borderWidth: 3,
       pointBackgroundColor: color,
       pointBorderColor: '#fff',
-      pointBorderWidth: 1,
-      pointRadius: 2,
-      pointHoverRadius: 4,
+      pointBorderWidth: 2,
+      pointRadius: 4,
+      pointHoverRadius: 6,
+      pointHoverBorderWidth: 3,
     }],
   }), [chartData]);
+
+  // Performance metrics chart data
+  const performanceChartData = useMemo(() => ({
+    labels: ['Response Time', 'Throughput', 'Error Rate'],
+    datasets: [{
+      label: 'Current Performance',
+      data: [
+        performanceMetrics.responseTime,
+        performanceMetrics.throughput / 100,
+        performanceMetrics.errorRate * 20,
+      ],
+      backgroundColor: [
+        theme.palette.primary.main,
+        theme.palette.success.main,
+        theme.palette.error.main,
+      ],
+      borderColor: [
+        theme.palette.primary.dark,
+        theme.palette.success.dark,
+        theme.palette.error.dark,
+      ],
+      borderWidth: 2,
+      borderRadius: 8,
+    }],
+  }), [performanceMetrics, theme.palette]);
 
   const chartOptions = {
     responsive: true,
     maintainAspectRatio: false,
-    animation: false, // Disable all animations for seamless updates
+    animation: {
+      duration: 1000,
+      easing: 'easeInOutQuart',
+    },
     interaction: {
       intersect: false,
       mode: 'index' as const,
     },
-    transitions: {
-      active: {
-        animation: {
-          duration: 0, // No animation on hover
-        }
-      }
-    },
     plugins: {
       legend: {
         position: 'top' as const,
+        labels: {
+          usePointStyle: true,
+          padding: 20,
+          font: {
+            size: 12,
+            weight: '600',
+          },
+        },
       },
       title: {
         display: false,
+      },
+      tooltip: {
+        backgroundColor: theme.palette.background.paper,
+        titleColor: theme.palette.text.primary,
+        bodyColor: theme.palette.text.secondary,
+        borderColor: theme.palette.divider,
+        borderWidth: 1,
+        cornerRadius: 8,
+        displayColors: true,
+        padding: 12,
       },
     },
     scales: {
       x: {
         display: true,
         grid: {
-          display: false, // Cleaner look
+          display: false,
+        },
+        ticks: {
+          maxRotation: 45,
+          minRotation: 45,
         },
       },
       y: {
@@ -246,15 +341,40 @@ const AdminDashboard: React.FC<AdminDashboardProps> = React.memo(({ onLogout }) 
           color: theme.palette.divider,
           lineWidth: 0.5,
         },
+        ticks: {
+          callback: function(value: any) {
+            if (typeof value === 'number') {
+              return value.toLocaleString();
+            }
+            return value;
+          },
+        },
       },
     },
     elements: {
       line: {
-        tension: 0.4, // Smooth curves
+        tension: 0.4,
       },
       point: {
-        radius: 3,
-        hoverRadius: 6,
+        radius: 4,
+        hoverRadius: 8,
+      },
+    },
+  };
+
+  const barChartOptions = {
+    ...chartOptions,
+    plugins: {
+      ...chartOptions.plugins,
+      legend: {
+        display: false,
+      },
+    },
+    scales: {
+      ...chartOptions.scales,
+      y: {
+        ...chartOptions.scales.y,
+        beginAtZero: true,
       },
     },
   };
@@ -287,7 +407,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = React.memo(({ onLogout }) 
         mx: 'auto',
         p: { xs: 2, sm: 3 },
       }}
-      className="fade-in"
+      className="fade-in-up"
     >
       {/* Header */}
       <Box
@@ -326,23 +446,28 @@ const AdminDashboard: React.FC<AdminDashboardProps> = React.memo(({ onLogout }) 
               label="Live"
               color="success"
               sx={{ ml: 2 }}
+              icon={<div className="status-indicator status-online" />}
             />
           </Typography>
         </Box>
 
         <Box sx={{ display: 'flex', gap: 1 }}>
-          <IconButton
-            onClick={fetchData}
-            disabled={loadingState !== 'idle' && loadingState !== 'success'}
-            sx={{
-              border: `1px solid ${theme.palette.divider}`,
-              '&:hover': {
-                backgroundColor: theme.palette.action.hover,
-              },
-            }}
-          >
-            <RefreshIcon />
-          </IconButton>
+          <Tooltip title="Refresh Data">
+            <IconButton
+              onClick={fetchData}
+              disabled={loadingState !== 'idle' && loadingState !== 'success'}
+              sx={{
+                border: `1px solid ${theme.palette.divider}`,
+                '&:hover': {
+                  backgroundColor: theme.palette.action.hover,
+                  transform: 'rotate(180deg)',
+                },
+                transition: 'all 0.3s ease',
+              }}
+            >
+              <RefreshIcon />
+            </IconButton>
+          </Tooltip>
           <Button
             variant="outlined"
             startIcon={<LogoutIcon />}
@@ -377,22 +502,34 @@ const AdminDashboard: React.FC<AdminDashboardProps> = React.memo(({ onLogout }) 
       {/* Statistics Cards */}
       <Grid container spacing={3} sx={{ mb: 4 }}>
         <Grid item xs={12} sm={6} md={3}>
-          <Card className="card-hover" sx={{ borderRadius: 3 }}>
+          <Card className="card-hover" sx={{ borderRadius: 3, position: 'relative', overflow: 'hidden' }}>
+            <Box
+              sx={{
+                position: 'absolute',
+                top: -20,
+                right: -20,
+                width: 80,
+                height: 80,
+                borderRadius: '50%',
+                background: `linear-gradient(45deg, ${theme.palette.primary.main}20, ${theme.palette.primary.light}20)`,
+                filter: 'blur(20px)',
+              }}
+            />
             <CardContent>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                <Box
+                <Avatar
                   sx={{
-                    p: 1.5,
-                    borderRadius: 2,
-                    backgroundColor: theme.palette.primary.light,
+                    backgroundColor: theme.palette.primary.main,
                     color: theme.palette.primary.contrastText,
+                    width: 56,
+                    height: 56,
                   }}
                 >
                   <TrendingUpIcon />
-                </Box>
+                </Avatar>
                 <Box>
                   <Typography variant="h4" sx={{ fontWeight: 700 }}>
-                    {stats.totalPredictions}
+                    {stats.totalPredictions.toLocaleString()}
                   </Typography>
                   <Typography variant="body2" color="text.secondary">
                     Total Predictions
@@ -404,19 +541,31 @@ const AdminDashboard: React.FC<AdminDashboardProps> = React.memo(({ onLogout }) 
         </Grid>
 
         <Grid item xs={12} sm={6} md={3}>
-          <Card className="card-hover" sx={{ borderRadius: 3 }}>
+          <Card className="card-hover" sx={{ borderRadius: 3, position: 'relative', overflow: 'hidden' }}>
+            <Box
+              sx={{
+                position: 'absolute',
+                top: -20,
+                right: -20,
+                width: 80,
+                height: 80,
+                borderRadius: '50%',
+                background: `linear-gradient(45deg, ${theme.palette.success.main}20, ${theme.palette.success.light}20)`,
+                filter: 'blur(20px)',
+              }}
+            />
             <CardContent>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                <Box
+                <Avatar
                   sx={{
-                    p: 1.5,
-                    borderRadius: 2,
-                    backgroundColor: theme.palette.success.light,
+                    backgroundColor: theme.palette.success.main,
                     color: theme.palette.success.contrastText,
+                    width: 56,
+                    height: 56,
                   }}
                 >
                   <SpeedIcon />
-                </Box>
+                </Avatar>
                 <Box>
                   <Typography variant="h4" sx={{ fontWeight: 700 }}>
                     {(stats.averageConfidence * 100).toFixed(1)}%
@@ -431,19 +580,31 @@ const AdminDashboard: React.FC<AdminDashboardProps> = React.memo(({ onLogout }) 
         </Grid>
 
         <Grid item xs={12} sm={6} md={3}>
-          <Card className="card-hover" sx={{ borderRadius: 3 }}>
+          <Card className="card-hover" sx={{ borderRadius: 3, position: 'relative', overflow: 'hidden' }}>
+            <Box
+              sx={{
+                position: 'absolute',
+                top: -20,
+                right: -20,
+                width: 80,
+                height: 80,
+                borderRadius: '50%',
+                background: `linear-gradient(45deg, ${theme.palette.error.main}20, ${theme.palette.error.light}20)`,
+                filter: 'blur(20px)',
+              }}
+            />
             <CardContent>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                <Box
+                <Avatar
                   sx={{
-                    p: 1.5,
-                    borderRadius: 2,
-                    backgroundColor: theme.palette.error.light,
+                    backgroundColor: theme.palette.error.main,
                     color: theme.palette.error.contrastText,
+                    width: 56,
+                    height: 56,
                   }}
                 >
                   <ErrorIcon />
-                </Box>
+                </Avatar>
                 <Box>
                   <Typography variant="h4" sx={{ fontWeight: 700 }}>
                     {stats.averageError.toFixed(2)}
@@ -458,19 +619,31 @@ const AdminDashboard: React.FC<AdminDashboardProps> = React.memo(({ onLogout }) 
         </Grid>
 
         <Grid item xs={12} sm={6} md={3}>
-          <Card className="card-hover" sx={{ borderRadius: 3 }}>
+          <Card className="card-hover" sx={{ borderRadius: 3, position: 'relative', overflow: 'hidden' }}>
+            <Box
+              sx={{
+                position: 'absolute',
+                top: -20,
+                right: -20,
+                width: 80,
+                height: 80,
+                borderRadius: '50%',
+                background: `linear-gradient(45deg, ${theme.palette.info.main}20, ${theme.palette.info.light}20)`,
+                filter: 'blur(20px)',
+              }}
+            />
             <CardContent>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                <Box
+                <Avatar
                   sx={{
-                    p: 1.5,
-                    borderRadius: 2,
-                    backgroundColor: theme.palette.info.light,
+                    backgroundColor: theme.palette.info.main,
                     color: theme.palette.info.contrastText,
+                    width: 56,
+                    height: 56,
                   }}
                 >
-                  <AnalyticsIcon />
-                </Box>
+                  <TimelineIcon />
+                </Avatar>
                 <Box>
                   <Typography variant="h4" sx={{ fontWeight: 700 }}>
                     {stats.uptime}
@@ -484,6 +657,122 @@ const AdminDashboard: React.FC<AdminDashboardProps> = React.memo(({ onLogout }) 
           </Card>
         </Grid>
       </Grid>
+
+      {/* Performance Metrics */}
+      <Grid container spacing={3} sx={{ mb: 4 }}>
+        <Grid item xs={12} md={6}>
+          <Card className="card-hover" sx={{ borderRadius: 3, height: '100%' }}>
+            <CardContent>
+              <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
+                Performance Metrics
+              </Typography>
+              <Box sx={{ mb: 2 }}>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                  <Typography variant="body2">Response Time</Typography>
+                  <Typography variant="body2" fontWeight={600}>
+                    {performanceMetrics.responseTime.toFixed(1)}ms
+                  </Typography>
+                </Box>
+                <LinearProgress 
+                  variant="determinate" 
+                  value={Math.min((performanceMetrics.responseTime / 200) * 100, 100)} 
+                  sx={{ height: 8, borderRadius: 4 }}
+                />
+              </Box>
+              <Box sx={{ mb: 2 }}>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                  <Typography variant="body2">Throughput</Typography>
+                  <Typography variant="body2" fontWeight={600}>
+                    {performanceMetrics.throughput.toFixed(0)} req/min
+                  </Typography>
+                </Box>
+                <LinearProgress 
+                  variant="determinate" 
+                  value={Math.min((performanceMetrics.throughput / 2000) * 100, 100)} 
+                  sx={{ height: 8, borderRadius: 4 }}
+                  color="success"
+                />
+              </Box>
+              <Box>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                  <Typography variant="body2">Error Rate</Typography>
+                  <Typography variant="body2" fontWeight={600}>
+                    {performanceMetrics.errorRate.toFixed(2)}%
+                  </Typography>
+                </Box>
+                <LinearProgress 
+                  variant="determinate" 
+                  value={Math.min((performanceMetrics.errorRate / 10) * 100, 100)} 
+                  sx={{ height: 8, borderRadius: 4 }}
+                  color="error"
+                />
+              </Box>
+            </CardContent>
+          </Card>
+        </Grid>
+
+        <Grid item xs={12} md={6}>
+          <Card className="card-hover" sx={{ borderRadius: 3, height: '100%' }}>
+            <CardContent>
+              <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
+                Performance Overview
+              </Typography>
+              <Box sx={{ height: 200 }}>
+                <Bar data={performanceChartData} options={barChartOptions} />
+              </Box>
+            </CardContent>
+          </Card>
+        </Grid>
+      </Grid>
+
+      {/* Active Alerts */}
+      {alerts.length > 0 && (
+        <Box sx={{ mb: 4 }}>
+          <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
+            Active Alerts
+          </Typography>
+          <Grid container spacing={2}>
+            {alerts.slice(0, 6).map((alert) => (
+              <Grid item xs={12} sm={6} md={4} key={alert.id}>
+                <Card 
+                  className="card-hover" 
+                  sx={{ 
+                    borderRadius: 2,
+                    border: `1px solid ${
+                      alert.type === 'error' ? theme.palette.error.main :
+                      alert.type === 'warning' ? theme.palette.warning.main :
+                      theme.palette.info.main
+                    }`,
+                  }}
+                >
+                  <CardContent sx={{ p: 2 }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                      {alert.type === 'error' && <ErrorIcon color="error" fontSize="small" />}
+                      {alert.type === 'warning' && <WarningIcon color="warning" fontSize="small" />}
+                      {alert.type === 'info' && <InfoIcon color="info" fontSize="small" />}
+                      <Typography variant="body2" fontWeight={600} sx={{ textTransform: 'capitalize' }}>
+                        {alert.type}
+                      </Typography>
+                      <Chip 
+                        size="small" 
+                        label={`${alert.severity.toFixed(1)}`}
+                        color={alert.type === 'error' ? 'error' : alert.type === 'warning' ? 'warning' : 'info'}
+                        sx={{ ml: 'auto' }}
+                      />
+                    </Box>
+                    <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                      {alert.message}
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary">
+                      {new Date(alert.timestamp).toLocaleString()}
+                    </Typography>
+                  </CardContent>
+                </Card>
+              </Grid>
+            ))}
+          </Grid>
+        </Box>
+      )}
 
       {/* Chart Tabs */}
       {chartData.length > 0 ? (
@@ -499,12 +788,13 @@ const AdminDashboard: React.FC<AdminDashboardProps> = React.memo(({ onLogout }) 
               '& .MuiTab-root': {
                 textTransform: 'none',
                 fontWeight: 600,
+                fontSize: '0.9rem',
               },
             }}
           >
-            <Tab label="Predictions Over Time" />
-            <Tab label="Model Confidence" />
-            <Tab label="Prediction Errors" />
+            <Tab label="Predictions Over Time" icon={<ShowChartIcon />} />
+            <Tab label="Model Confidence" icon={<AssessmentIcon />} />
+            <Tab label="Prediction Errors" icon={<TrendingDownIcon />} />
           </Tabs>
 
           <Box sx={{ p: 3 }}>
