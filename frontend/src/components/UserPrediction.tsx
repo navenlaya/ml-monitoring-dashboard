@@ -1,6 +1,5 @@
-import React, { useState, useCallback, useRef } from 'react';
+import React, { useState, useCallback, useRef, useEffect } from 'react';
 import {
-
   Typography,
   TextField,
   Tooltip,
@@ -17,8 +16,10 @@ import {
   IconButton,
   Fade,
   useTheme,
-
-
+  Paper,
+  Chip,
+  Divider,
+  LinearProgress,
 } from '@mui/material';
 import {
   AttachMoney as AttachMoneyIcon,
@@ -30,10 +31,10 @@ import {
   RestartAlt as RestartAltIcon,
   TrendingUp as TrendingUpIcon,
   Close as CloseIcon,
-
-
-
   KeyboardArrowDown as ArrowDownIcon,
+  CheckCircle as CheckCircleIcon,
+  Info as InfoIcon,
+  Speed as SpeedIcon,
 } from '@mui/icons-material';
 
 import { sendPrediction } from '../api';
@@ -47,6 +48,7 @@ interface FieldMeta {
   min?: number;
   max?: number;
   step?: number;
+  placeholder?: string;
 }
 
 const UserPrediction: React.FC = () => {
@@ -70,6 +72,8 @@ const UserPrediction: React.FC = () => {
   const [error, setError] = useState<ApiError | null>(null);
   const [loadingState, setLoadingState] = useState<LoadingState>('idle');
   const [formErrors, setFormErrors] = useState<FormErrors>({});
+  const [completedFields, setCompletedFields] = useState<Set<keyof PredictionRequest>>(new Set());
+  const [showProgress, setShowProgress] = useState(false);
 
   // Scroll to property form section
   const scrollToForm = useCallback(() => {
@@ -78,6 +82,18 @@ const UserPrediction: React.FC = () => {
       block: 'start'
     });
   }, []);
+
+  // Track completed fields
+  useEffect(() => {
+    const completed = new Set<keyof PredictionRequest>();
+    Object.entries(formData).forEach(([key, value]) => {
+      if (value > 0 || (key === 'MedInc' && value >= 0)) {
+        completed.add(key as keyof PredictionRequest);
+      }
+    });
+    setCompletedFields(completed);
+    setShowProgress(completed.size > 0);
+  }, [formData]);
 
   // Field metadata with enhanced information
   const fieldMeta: Record<keyof PredictionRequest, FieldMeta> = {
@@ -88,6 +104,7 @@ const UserPrediction: React.FC = () => {
       min: 0,
       max: 20,
       step: 0.1,
+      placeholder: 'e.g., 8.5 for $85,000',
     },
     HouseAge: { 
       label: 'House Age', 
@@ -97,6 +114,7 @@ const UserPrediction: React.FC = () => {
       min: 0,
       max: 100,
       step: 1,
+      placeholder: 'e.g., 25',
     },
     AveRooms: { 
       label: 'Average Rooms', 
@@ -105,6 +123,7 @@ const UserPrediction: React.FC = () => {
       min: 0,
       max: 20,
       step: 0.1,
+      placeholder: 'e.g., 5.2',
     },
     AveBedrms: { 
       label: 'Average Bedrooms', 
@@ -113,6 +132,7 @@ const UserPrediction: React.FC = () => {
       min: 0,
       max: 10,
       step: 0.1,
+      placeholder: 'e.g., 3.1',
     },
     Population: { 
       label: 'Population', 
@@ -121,6 +141,7 @@ const UserPrediction: React.FC = () => {
       min: 1,
       max: 50000,
       step: 1,
+      placeholder: 'e.g., 1500',
     },
     AveOccup: { 
       label: 'Average Occupancy', 
@@ -130,6 +151,7 @@ const UserPrediction: React.FC = () => {
       min: 0,
       max: 20,
       step: 0.1,
+      placeholder: 'e.g., 2.8',
     },
     Latitude: { 
       label: 'Latitude', 
@@ -138,6 +160,7 @@ const UserPrediction: React.FC = () => {
       min: 32,
       max: 42,
       step: 0.0001,
+      placeholder: 'e.g., 37.7749',
     },
     Longitude: { 
       label: 'Longitude', 
@@ -146,6 +169,7 @@ const UserPrediction: React.FC = () => {
       min: -125,
       max: -114,
       step: 0.0001,
+      placeholder: 'e.g., -122.4194',
     },
   };
 
@@ -204,6 +228,14 @@ const UserPrediction: React.FC = () => {
       const result = await sendPrediction(formData);
       setPrediction(result);
       setLoadingState('success');
+      
+      // Scroll to result
+      setTimeout(() => {
+        window.scrollTo({
+          top: document.documentElement.scrollHeight,
+          behavior: 'smooth'
+        });
+      }, 500);
     } catch (err) {
       const apiError = err as ApiError;
       setError(apiError);
@@ -228,12 +260,16 @@ const UserPrediction: React.FC = () => {
     setError(null);
     setFormErrors({});
     setLoadingState('idle');
+    setCompletedFields(new Set());
+    setShowProgress(false);
   }, []);
 
   // Close error alert
   const handleCloseError = useCallback(() => {
     setError(null);
   }, []);
+
+  const progressPercentage = (completedFields.size / Object.keys(fieldMeta).length) * 100;
 
   return (
     <Box sx={{ width: '100%', minHeight: '100vh' }}>
@@ -245,16 +281,53 @@ const UserPrediction: React.FC = () => {
         alignItems: 'center',
         justifyContent: 'center',
         minHeight: '100vh',
+        position: 'relative',
+        overflow: 'hidden',
       }}>
-        <Box sx={{ textAlign: 'center', maxWidth: 900, width: '100%' }}>
+        {/* Background decoration */}
+        <Box
+          sx={{
+            position: 'absolute',
+            top: '10%',
+            right: '10%',
+            width: 200,
+            height: 200,
+            borderRadius: '50%',
+            background: `linear-gradient(45deg, ${theme.palette.primary.main}20, ${theme.palette.secondary.main}20)`,
+            filter: 'blur(40px)',
+            animation: 'float 6s ease-in-out infinite',
+          }}
+        />
+        <Box
+          sx={{
+            position: 'absolute',
+            bottom: '20%',
+            left: '5%',
+            width: 150,
+            height: 150,
+            borderRadius: '50%',
+            background: `linear-gradient(45deg, ${theme.palette.success.main}20, ${theme.palette.info.main}20)`,
+            filter: 'blur(30px)',
+            animation: 'float 8s ease-in-out infinite reverse',
+          }}
+        />
+
+        <Box sx={{ textAlign: 'center', maxWidth: 900, width: '100%', position: 'relative', zIndex: 1 }}>
           <Typography 
             variant="h2" 
             gutterBottom 
+            className="fade-in-up"
             sx={{ 
               fontWeight: 800,
               color: theme.palette.text.primary,
               fontSize: { xs: '2.5rem', md: '3.5rem' },
               mb: 3,
+              background: theme.palette.mode === 'dark'
+                ? 'linear-gradient(45deg, #90caf9, #64b5f6)'
+                : 'linear-gradient(45deg, #1976d2, #1565c0)',
+              backgroundClip: 'text',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
             }}
           >
             Predict Your Home's Market Value
@@ -263,6 +336,7 @@ const UserPrediction: React.FC = () => {
           <Typography 
             variant="h6" 
             color="text.secondary" 
+            className="slide-in-left"
             sx={{ 
               fontSize: { xs: '1.1rem', md: '1.25rem' },
               mb: 5,
@@ -280,6 +354,7 @@ const UserPrediction: React.FC = () => {
             size="large"
             onClick={scrollToForm}
             endIcon={<ArrowDownIcon />}
+            className="btn-glow slide-in-right"
             sx={{
               py: 2,
               px: 6,
@@ -287,7 +362,7 @@ const UserPrediction: React.FC = () => {
               borderRadius: 3,
               textTransform: 'none',
               fontWeight: 600,
-              background: theme.palette.primary.main,
+              background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.primary.dark})`,
               '&:hover': {
                 transform: 'translateY(-2px)',
                 boxShadow: '0 8px 25px rgba(25, 118, 210, 0.3)',
@@ -313,6 +388,7 @@ const UserPrediction: React.FC = () => {
           <Typography 
             variant="h4" 
             gutterBottom 
+            className="fade-in-up"
             sx={{ 
               fontWeight: 700,
               color: theme.palette.text.primary,
@@ -325,190 +401,306 @@ const UserPrediction: React.FC = () => {
           <Typography 
             variant="body1" 
             color="text.secondary" 
-            sx={{ fontSize: '1.1rem' }}
+            sx={{ fontSize: '1.1rem', mb: 3 }}
           >
             Enter your property details below to receive an accurate market valuation estimate.
           </Typography>
+
+          {/* Progress indicator */}
+          {showProgress && (
+            <Fade in={showProgress} timeout={500}>
+              <Box sx={{ maxWidth: 400, mx: 'auto' }}>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                  <Typography variant="body2" color="text.secondary">
+                    Form Completion
+                  </Typography>
+                  <Typography variant="body2" color="primary.main" fontWeight={600}>
+                    {Math.round(progressPercentage)}%
+                  </Typography>
+                </Box>
+                <LinearProgress 
+                  variant="determinate" 
+                  value={progressPercentage} 
+                  sx={{ 
+                    height: 8, 
+                    borderRadius: 4,
+                    backgroundColor: theme.palette.grey[200],
+                    '& .MuiLinearProgress-bar': {
+                      borderRadius: 4,
+                      background: `linear-gradient(90deg, ${theme.palette.primary.main}, ${theme.palette.primary.light})`,
+                    }
+                  }} 
+                />
+                <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
+                  {completedFields.size} of {Object.keys(fieldMeta).length} fields completed
+                </Typography>
+              </Box>
+            </Fade>
+          )}
         </Box>
 
         <Grid container spacing={8} sx={{ maxWidth: 'none', width: '100%' }}>
-            {/* Property Details Form */}
-            <Grid item xs={12}>
-              <Box 
-                sx={{ 
-                  p: { xs: 4, md: 6 }, 
-                  height: 'fit-content',
-                  bgcolor: theme.palette.background.paper,
-                  borderRadius: 3,
-                  boxShadow: theme.shadows[2],
+          {/* Property Details Form */}
+          <Grid item xs={12}>
+            <Paper 
+              elevation={0}
+              sx={{ 
+                p: { xs: 4, md: 6 }, 
+                height: 'fit-content',
+                bgcolor: theme.palette.background.paper,
+                borderRadius: 4,
+                border: `1px solid ${theme.palette.divider}`,
+                position: 'relative',
+                overflow: 'hidden',
+              }}
+              className="card-hover"
+            >
+              {/* Decorative elements */}
+              <Box
+                sx={{
+                  position: 'absolute',
+                  top: -20,
+                  right: -20,
+                  width: 100,
+                  height: 100,
+                  borderRadius: '50%',
+                  background: `linear-gradient(45deg, ${theme.palette.primary.main}10, ${theme.palette.secondary.main}10)`,
+                  filter: 'blur(20px)',
                 }}
-              >
-                <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
-                  <HomeIcon sx={{ mr: 1, color: theme.palette.primary.main }} />
+              />
+
+              <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
+                <Box
+                  sx={{
+                    p: 1.5,
+                    borderRadius: 2,
+                    backgroundColor: theme.palette.primary.main,
+                    color: theme.palette.primary.contrastText,
+                    mr: 2,
+                  }}
+                >
+                  <HomeIcon />
+                </Box>
+                <Box>
                   <Typography variant="h6" sx={{ fontWeight: 600 }}>
                     Property Details
                   </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    Provide accurate information for the best estimate
+                  </Typography>
                 </Box>
-                <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-                  Provide accurate information for the best estimate
-                </Typography>
+              </Box>
 
-                {/* Error Alert */}
-                <Collapse in={!!error}>
-                  <Alert 
-                    severity="error" 
-                    sx={{ mb: 3, borderRadius: 2 }}
-                    action={
-                      <IconButton
-                        aria-label="close"
-                        color="inherit"
-                        size="small"
-                        onClick={handleCloseError}
-                      >
-                        <CloseIcon fontSize="inherit" />
-                      </IconButton>
-                    }
-                  >
-                    {error?.message}
-                  </Alert>
-                </Collapse>
+              <Divider sx={{ mb: 3 }} />
 
-                <Box component="form" onSubmit={handleSubmit}>
-                  <Grid container spacing={3}>
-                    {Object.entries(fieldMeta).map(([key, meta]) => {
-                      const fieldKey = key as keyof PredictionRequest;
-                      return (
-                        <Grid item xs={12} key={key}>
-                          <Tooltip title={meta.tip} arrow placement="top">
-                            <TextField
-                              label={meta.label}
-                              name={key}
-                              value={formData[fieldKey] || ''}
-                              onChange={handleChange}
-                              type="number"
-                              fullWidth
-                              required
-                              variant="outlined"
-                              size="medium"
-                              error={!!formErrors[fieldKey]}
-                              helperText={formErrors[fieldKey]}
-                              inputProps={{
-                                min: meta.min,
-                                max: meta.max,
-                                step: meta.step,
-                              }}
-                              InputProps={{
-                                startAdornment: (
-                                  <InputAdornment position="start">
-                                    {meta.icon}
-                                  </InputAdornment>
-                                ),
-                                endAdornment: meta.unit && (
-                                  <InputAdornment position="end">
+              {/* Error Alert */}
+              <Collapse in={!!error}>
+                <Alert 
+                  severity="error" 
+                  sx={{ mb: 3, borderRadius: 2 }}
+                  action={
+                    <IconButton
+                      aria-label="close"
+                      color="inherit"
+                      size="small"
+                      onClick={handleCloseError}
+                    >
+                      <CloseIcon fontSize="inherit" />
+                    </IconButton>
+                  }
+                >
+                  {error?.message}
+                </Alert>
+              </Collapse>
+
+              <Box component="form" onSubmit={handleSubmit}>
+                <Grid container spacing={3}>
+                  {Object.entries(fieldMeta).map(([key, meta], index) => {
+                    const fieldKey = key as keyof PredictionRequest;
+                    const isCompleted = completedFields.has(fieldKey);
+                    
+                    return (
+                      <Grid item xs={12} sm={6} key={key}>
+                        <Tooltip title={meta.tip} arrow placement="top">
+                          <TextField
+                            label={meta.label}
+                            name={key}
+                            value={formData[fieldKey] || ''}
+                            onChange={handleChange}
+                            type="number"
+                            fullWidth
+                            required
+                            variant="outlined"
+                            size="medium"
+                            error={!!formErrors[fieldKey]}
+                            helperText={formErrors[fieldKey]}
+                            placeholder={meta.placeholder}
+                            inputProps={{
+                              min: meta.min,
+                              max: meta.max,
+                              step: meta.step,
+                            }}
+                            InputProps={{
+                              startAdornment: (
+                                <InputAdornment position="start">
+                                  {meta.icon}
+                                </InputAdornment>
+                              ),
+                              endAdornment: (
+                                <InputAdornment position="end">
+                                  {isCompleted && (
+                                    <CheckCircleIcon 
+                                      color="success" 
+                                      fontSize="small" 
+                                      sx={{ mr: 1 }}
+                                    />
+                                  )}
+                                  {meta.unit && (
                                     <Typography variant="caption" color="text.secondary">
                                       {meta.unit}
                                     </Typography>
-                                  </InputAdornment>
-                                ),
-                              }}
-                              sx={{
-                                '& .MuiOutlinedInput-root': {
-                                  borderRadius: 2,
-                                  '&:hover fieldset': {
-                                    borderColor: theme.palette.primary.main,
-                                  },
+                                  )}
+                                </InputAdornment>
+                              ),
+                            }}
+                            sx={{
+                              '& .MuiOutlinedInput-root': {
+                                borderRadius: 2,
+                                transition: 'all 0.3s ease',
+                                '&:hover fieldset': {
+                                  borderColor: theme.palette.primary.main,
+                                  borderWidth: 2,
                                 },
-                              }}
-                            />
-                          </Tooltip>
-                        </Grid>
-                      );
-                    })}
+                                '&.Mui-focused fieldset': {
+                                  borderColor: theme.palette.primary.main,
+                                  borderWidth: 2,
+                                },
+                              },
+                              animationDelay: `${index * 100}ms`,
+                            }}
+                            className="fade-in-up"
+                          />
+                        </Tooltip>
+                      </Grid>
+                    );
+                  })}
 
-                    {/* Action Buttons */}
-                    <Grid item xs={12}>
-                      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 2 }}>
-                        <Button 
-                          type="submit" 
-                          variant="contained" 
-                          size="large"
-                          disabled={loadingState === 'loading'}
-                          startIcon={loadingState === 'loading' ? <CircularProgress size={20} /> : <TrendingUpIcon />}
-                          sx={{ 
-                            py: 2,
-                            borderRadius: 2,
-                            fontSize: '1.1rem',
-                            fontWeight: 600,
-                          }}
-                        >
-                          {loadingState === 'loading' ? 'Analyzing...' : 'Get Price Estimate'}
-                        </Button>
-                        
-                        <Button 
-                          onClick={handleReset} 
-                          variant="outlined" 
-                          size="large"
-                          startIcon={<RestartAltIcon />}
-                          sx={{ 
-                            py: 1.5,
-                            borderRadius: 2,
-                          }}
-                        >
-                          Reset
-                        </Button>
-                      </Box>
-                    </Grid>
-                  </Grid>
-                </Box>
-
-                {/* Prediction Result */}
-                <Fade in={!!prediction} timeout={500}>
-                  <Box sx={{ mt: 4 }}>
-                    {prediction && (
-                      <Card 
-                        elevation={4} 
+                  {/* Action Buttons */}
+                  <Grid item xs={12}>
+                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 2 }}>
+                      <Button 
+                        type="submit" 
+                        variant="contained" 
+                        size="large"
+                        disabled={loadingState === 'loading'}
+                        startIcon={loadingState === 'loading' ? <CircularProgress size={20} /> : <TrendingUpIcon />}
+                        className="btn-glow"
                         sx={{ 
-                          borderRadius: 3,
-                          border: `2px solid ${theme.palette.success.main}`,
-                          background: theme.palette.mode === 'dark' 
-                            ? 'rgba(76, 175, 80, 0.1)' 
-                            : 'rgba(76, 175, 80, 0.05)',
+                          py: 2,
+                          borderRadius: 2,
+                          fontSize: '1.1rem',
+                          fontWeight: 600,
+                          background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.primary.dark})`,
+                          '&:hover': {
+                            transform: 'translateY(-2px)',
+                            boxShadow: '0 8px 25px rgba(25, 118, 210, 0.3)',
+                          },
+                          transition: 'all 0.3s ease',
                         }}
                       >
-                        <CardHeader 
-                          title="🎉 Your Property Valuation" 
+                        {loadingState === 'loading' ? 'Analyzing...' : 'Get Price Estimate'}
+                      </Button>
+                      
+                      <Button 
+                        onClick={handleReset} 
+                        variant="outlined" 
+                        size="large"
+                        startIcon={<RestartAltIcon />}
+                        sx={{ 
+                          py: 1.5,
+                          borderRadius: 2,
+                          borderColor: theme.palette.divider,
+                          '&:hover': {
+                            borderColor: theme.palette.primary.main,
+                            backgroundColor: theme.palette.primary.main + '10',
+                          },
+                        }}
+                      >
+                        Reset Form
+                      </Button>
+                    </Box>
+                  </Grid>
+                </Grid>
+              </Box>
+
+              {/* Prediction Result */}
+              <Fade in={!!prediction} timeout={500}>
+                <Box sx={{ mt: 4 }}>
+                  {prediction && (
+                    <Card 
+                      elevation={0}
+                      sx={{ 
+                        borderRadius: 3,
+                        border: `2px solid ${theme.palette.success.main}`,
+                        background: theme.palette.mode === 'dark' 
+                          ? 'rgba(76, 175, 80, 0.1)' 
+                          : 'rgba(76, 175, 80, 0.05)',
+                        position: 'relative',
+                        overflow: 'hidden',
+                      }}
+                      className="card-hover"
+                    >
+                      {/* Success decoration */}
+                      <Box
+                        sx={{
+                          position: 'absolute',
+                          top: -50,
+                          right: -50,
+                          width: 100,
+                          height: 100,
+                          borderRadius: '50%',
+                          background: `linear-gradient(45deg, ${theme.palette.success.main}20, ${theme.palette.success.light}20)`,
+                          filter: 'blur(30px)',
+                        }}
+                      />
+
+                      <CardHeader 
+                        title="🎉 Your Property Valuation" 
+                        sx={{ 
+                          textAlign: 'center', 
+                          '& .MuiCardHeader-title': {
+                            fontWeight: 600,
+                            fontSize: '1.25rem',
+                            color: theme.palette.success.dark,
+                          },
+                        }} 
+                      />
+                      <CardContent sx={{ textAlign: 'center', pb: 3 }}>
+                        <Typography 
+                          variant="h3" 
+                          gutterBottom 
                           sx={{ 
-                            textAlign: 'center', 
-                            '& .MuiCardHeader-title': {
-                              fontWeight: 600,
-                              fontSize: '1.25rem',
-                              color: theme.palette.success.dark,
-                            },
-                          }} 
-                        />
-                        <CardContent sx={{ textAlign: 'center', pb: 3 }}>
-                          <Typography 
-                            variant="h3" 
-                            gutterBottom 
-                            sx={{ 
-                              fontWeight: 800, 
-                              color: theme.palette.success.main,
-                              fontSize: '3rem',
-                            }}
-                          >
-                            ${prediction.predicted_price?.toLocaleString(undefined, {
-                              minimumFractionDigits: 0,
-                              maximumFractionDigits: 0,
-                            })}
-                          </Typography>
-                          <Typography 
-                            variant="h6" 
-                            color="text.secondary"
-                            sx={{ fontWeight: 500, mb: 1 }}
-                          >
-                            Estimated Market Value
-                          </Typography>
-                          {prediction.confidence && (
+                            fontWeight: 800, 
+                            color: theme.palette.success.main,
+                            fontSize: { xs: '2rem', md: '3rem' },
+                            mb: 2,
+                          }}
+                        >
+                          ${prediction.predicted_price?.toLocaleString(undefined, {
+                            minimumFractionDigits: 0,
+                            maximumFractionDigits: 0,
+                          })}
+                        </Typography>
+                        <Typography 
+                          variant="h6" 
+                          color="text.secondary"
+                          sx={{ fontWeight: 500, mb: 2 }}
+                        >
+                          Estimated Market Value
+                        </Typography>
+                        {prediction.confidence && (
+                          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1 }}>
+                            <SpeedIcon color="success" fontSize="small" />
                             <Typography 
                               variant="body2" 
                               sx={{ 
@@ -518,19 +710,18 @@ const UserPrediction: React.FC = () => {
                             >
                               Confidence: {(prediction.confidence * 100).toFixed(1)}%
                             </Typography>
-                          )}
-                        </CardContent>
-                      </Card>
-                    )}
-                  </Box>
-                </Fade>
-              </Box>
-            </Grid>
-
-
+                          </Box>
+                        )}
+                      </CardContent>
+                    </Card>
+                  )}
+                </Box>
+              </Fade>
+            </Paper>
           </Grid>
-        </Box>
+        </Grid>
       </Box>
+    </Box>
   );
 };
 
