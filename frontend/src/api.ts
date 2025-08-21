@@ -1,5 +1,5 @@
 import axios, { AxiosResponse, AxiosError } from 'axios';
-import { PredictionRequest, PredictionResponse, ApiError } from './types';
+import { PredictionRequest, PredictionResponse, AddressPredictionRequest, AddressPredictionResponse, ApiError } from './types';
 
 // Create axios instance with default config
 const API = axios.create({
@@ -46,6 +46,16 @@ API.interceptors.response.use(
 export const sendPrediction = async (data: PredictionRequest): Promise<PredictionResponse> => {
   try {
     const response = await API.post<PredictionResponse>('/predict', data);
+    return response.data;
+  } catch (error) {
+    throw error as ApiError;
+  }
+};
+
+// Send address-based prediction request
+export const sendAddressPrediction = async (data: AddressPredictionRequest): Promise<AddressPredictionResponse> => {
+  try {
+    const response = await API.post<AddressPredictionResponse>('/predict/address', data);
     return response.data;
   } catch (error) {
     throw error as ApiError;

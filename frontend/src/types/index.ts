@@ -10,6 +10,26 @@ export interface PredictionRequest {
   Longitude: number;
 }
 
+export interface AddressPredictionRequest {
+  address: string;
+  MedInc: number;
+  HouseAge: number;
+  AveRooms: number;
+  AveBedrms: number;
+  Population: number;
+  AveOccup: number;
+}
+
+export interface GeocodedResponse {
+  latitude: number;
+  longitude: number;
+}
+
+export interface AddressPredictionResponse extends PredictionResponse {
+  geocoded_coordinates: GeocodedResponse;
+  address: string;
+}
+
 export interface PredictionResponse {
   predicted_price: number;
   confidence?: number;

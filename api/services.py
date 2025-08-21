@@ -1,10 +1,13 @@
+import requests
+import time
+from typing import Optional, Tuple, Dict, Any, List
 from sqlalchemy.orm import Session
 from sqlalchemy import func, desc, and_
 from datetime import datetime, timedelta
-from typing import List, Dict, Optional, Tuple
-import psutil
 import numpy as np
+import pandas as pd
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
+import psutil
 
 from .database import Prediction, SystemMetrics, ModelPerformance, Alert
 
@@ -284,4 +287,99 @@ class AnalyticsService:
             "min_price": float(np.min(prices)),
             "max_price": float(np.max(prices)),
             "avg_price": float(np.mean(prices))
+        } 
+
+class GeocodingService:
+    """Service for converting addresses to coordinates"""
+    
+    @staticmethod
+    def geocode_address(address: str) -> Optional[Tuple[float, float]]:
+        """
+        Convert address to latitude/longitude using OpenStreetMap Nominatim
+        
+        Args:
+            address: Full address string (e.g., "123 Main St, San Francisco, CA 94102")
+            
+        Returns:
+            Tuple of (latitude, longitude) or None if geocoding fails
+        """
+        try:
+            # Nominatim API endpoint
+            url = "https://nominatim.openstreetmap.org/search"
+            
+            # Parameters for the request
+            params = {
+                'q': address,
+                'format': 'json',
+                'limit': 1,
+                'addressdetails': 1
+            }
+            
+            # Make request with proper headers (required by Nominatim)
+            headers = {
+                'User-Agent': 'ML-Monitoring-Dashboard/1.0'
+            }
+            
+            # Add delay to respect rate limiting (1 request per second)
+            time.sleep(1)
+            
+            response = requests.get(url, params=params, headers=headers, timeout=10)
+            response.raise_for_status()
+            
+            data = response.json()
+            
+            if data and len(data) > 0:
+                result = data[0]
+                lat = float(result['lat'])
+                lon = float(result['lon'])
+                
+                # Validate coordinates
+                if -90 <= lat <= 90 and -180 <= lon <= 180:
+                    return (lat, lon)
+                    
+            return None
+            
+        except Exception as e:
+            print(f"Geocoding error for address '{address}': {str(e)}")
+            return None
+    
+    @staticmethod
+    def get_address_components(address: str) -> Dict[str, Any]:
+        """
+        Parse address into components for better geocoding
+        
+        Args:
+            address: Full address string
+            
+        Returns:
+            Dictionary with address components
+        """
+        # Simple address parsing (can be enhanced)
+        parts = address.split(',')
+        
+        if len(parts) >= 3:
+            street = parts[0].strip()
+            city = parts[1].strip()
+            state_zip = parts[2].strip()
+            
+            # Try to separate state and zip
+            state_zip_parts = state_zip.split()
+            if len(state_zip_parts) >= 2:
+                state = ' '.join(state_zip_parts[:-1])
+                zip_code = state_zip_parts[-1]
+            else:
+                state = state_zip
+                zip_code = ""
+        else:
+            street = address.strip()
+            city = ""
+            state = ""
+            zip_code = ""
+        
+        return {
+            'street': street,
+            'city': city,
+            'state': state,
+            'zip_code': zip_code,
+            'full_address': address
         } 

@@ -20,6 +20,8 @@ import {
   Chip,
   Divider,
   LinearProgress,
+  Tabs,
+  Tab,
 } from '@mui/material';
 import {
   AttachMoney as AttachMoneyIcon,
@@ -39,6 +41,7 @@ import {
 
 import { sendPrediction } from '../api';
 import { PredictionRequest, PredictionResponse, ApiError, LoadingState, FormErrors } from '../types';
+import AddressPredictionForm from './AddressPredictionForm';
 
 interface FieldMeta {
   label: string;
@@ -74,6 +77,7 @@ const UserPrediction: React.FC = () => {
   const [formErrors, setFormErrors] = useState<FormErrors>({});
   const [completedFields, setCompletedFields] = useState<Set<keyof PredictionRequest>>(new Set());
   const [showProgress, setShowProgress] = useState(false);
+  const [activeTab, setActiveTab] = useState(1); // Start with Manual Coordinates tab
 
   // Scroll to property form section
   const scrollToForm = useCallback(() => {
@@ -82,6 +86,13 @@ const UserPrediction: React.FC = () => {
       block: 'start'
     });
   }, []);
+
+  // Handle tab changes
+  const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
+    setActiveTab(newValue);
+    setPrediction(null);
+    setError(null);
+  };
 
   // Track completed fields
   useEffect(() => {
@@ -104,7 +115,7 @@ const UserPrediction: React.FC = () => {
       min: 0,
       max: 20,
       step: 0.1,
-      placeholder: 'e.g., 8.5 for $85,000',
+      placeholder: '8.5 (for $85,000)',
     },
     HouseAge: { 
       label: 'House Age', 
@@ -114,7 +125,7 @@ const UserPrediction: React.FC = () => {
       min: 0,
       max: 100,
       step: 1,
-      placeholder: 'e.g., 25',
+      placeholder: '25',
     },
     AveRooms: { 
       label: 'Average Rooms', 
@@ -123,7 +134,7 @@ const UserPrediction: React.FC = () => {
       min: 0,
       max: 20,
       step: 0.1,
-      placeholder: 'e.g., 5.2',
+      placeholder: '5.2',
     },
     AveBedrms: { 
       label: 'Average Bedrooms', 
@@ -132,7 +143,7 @@ const UserPrediction: React.FC = () => {
       min: 0,
       max: 10,
       step: 0.1,
-      placeholder: 'e.g., 3.1',
+      placeholder: '3.1',
     },
     Population: { 
       label: 'Population', 
@@ -141,7 +152,7 @@ const UserPrediction: React.FC = () => {
       min: 1,
       max: 50000,
       step: 1,
-      placeholder: 'e.g., 1500',
+      placeholder: '1500',
     },
     AveOccup: { 
       label: 'Average Occupancy', 
@@ -151,7 +162,7 @@ const UserPrediction: React.FC = () => {
       min: 0,
       max: 20,
       step: 0.1,
-      placeholder: 'e.g., 2.8',
+      placeholder: '2.8',
     },
     Latitude: { 
       label: 'Latitude', 
@@ -160,7 +171,7 @@ const UserPrediction: React.FC = () => {
       min: 32,
       max: 42,
       step: 0.0001,
-      placeholder: 'e.g., 37.7749',
+      placeholder: '37.7749',
     },
     Longitude: { 
       label: 'Longitude', 
@@ -169,7 +180,7 @@ const UserPrediction: React.FC = () => {
       min: -125,
       max: -114,
       step: 0.0001,
-      placeholder: 'e.g., -122.4194',
+      placeholder: '-122.4194',
     },
   };
 
@@ -437,55 +448,119 @@ const UserPrediction: React.FC = () => {
               </Box>
             </Fade>
           )}
+
+          {/* Tabs for different input methods */}
+          <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 4, mt: 4 }}>
+            <Tabs 
+              value={activeTab} 
+              onChange={handleTabChange} 
+              aria-label="prediction input methods"
+              centered
+              sx={{
+                '& .MuiTab-root': {
+                  minHeight: 64,
+                  fontSize: '1rem',
+                  fontWeight: 500,
+                }
+              }}
+            >
+              <Tab 
+                label="Address Input" 
+                icon={<LocationOnIcon />} 
+                iconPosition="start"
+              />
+              <Tab 
+                label="Manual Coordinates" 
+                icon={<TrendingUpIcon />} 
+                iconPosition="start"
+              />
+            </Tabs>
+          </Box>
         </Box>
 
-        <Grid container spacing={8} sx={{ maxWidth: 'none', width: '100%' }}>
-          {/* Property Details Form */}
-          <Grid item xs={12}>
+        {/* Tab Content */}
+        {activeTab === 0 ? (
+          // Address-based form
+          <AddressPredictionForm 
+            onPredictionComplete={(result) => {
+              // Convert to PredictionResponse format for consistency
+              setPrediction({
+                predicted_price: result.predicted_price,
+                confidence: result.confidence,
+                model_version: result.model_version,
+                response_time_ms: result.response_time_ms
+              });
+              setError(null);
+            }}
+          />
+        ) : (
+          // Manual coordinates form
+          <Grid container spacing={8} sx={{ maxWidth: 'none', width: '100%' }}>
+            {/* Property Details Form */}
+            <Grid item xs={12}>
             <Paper 
               elevation={0}
               sx={{ 
                 p: { xs: 4, md: 6 }, 
                 height: 'fit-content',
-                bgcolor: theme.palette.background.paper,
-                borderRadius: 4,
-                border: `1px solid ${theme.palette.divider}`,
+                background: `linear-gradient(135deg, ${theme.palette.background.paper} 0%, ${theme.palette.mode === 'dark' ? 'rgba(25, 118, 210, 0.05)' : 'rgba(25, 118, 210, 0.02)'} 100%)`,
+                borderRadius: 6,
+                border: `1px solid ${theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.08)'}`,
                 position: 'relative',
                 overflow: 'hidden',
+                backdropFilter: 'blur(10px)',
+                boxShadow: theme.palette.mode === 'dark' 
+                  ? '0 8px 32px rgba(0, 0, 0, 0.4)' 
+                  : '0 8px 32px rgba(0, 0, 0, 0.1)',
               }}
               className="card-hover"
             >
-              {/* Decorative elements */}
+              {/* Enhanced decorative elements */}
               <Box
                 sx={{
                   position: 'absolute',
-                  top: -20,
-                  right: -20,
-                  width: 100,
-                  height: 100,
+                  top: -30,
+                  right: -30,
+                  width: 120,
+                  height: 120,
                   borderRadius: '50%',
-                  background: `linear-gradient(45deg, ${theme.palette.primary.main}10, ${theme.palette.secondary.main}10)`,
+                  background: `linear-gradient(135deg, ${theme.palette.primary.main}15, ${theme.palette.secondary.main}15)`,
+                  filter: 'blur(25px)',
+                  animation: 'pulse 4s ease-in-out infinite',
+                }}
+              />
+              <Box
+                sx={{
+                  position: 'absolute',
+                  bottom: -20,
+                  left: -20,
+                  width: 80,
+                  height: 80,
+                  borderRadius: '50%',
+                  background: `linear-gradient(135deg, ${theme.palette.secondary.main}10, ${theme.palette.primary.main}10)`,
                   filter: 'blur(20px)',
+                  animation: 'pulse 4s ease-in-out infinite 2s',
                 }}
               />
 
-              <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', mb: 4 }}>
                 <Box
                   sx={{
-                    p: 1.5,
-                    borderRadius: 2,
-                    backgroundColor: theme.palette.primary.main,
+                    p: 2,
+                    borderRadius: 3,
+                    background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.primary.dark})`,
                     color: theme.palette.primary.contrastText,
-                    mr: 2,
+                    mr: 3,
+                    boxShadow: `0 4px 20px ${theme.palette.primary.main}40`,
                   }}
                 >
-                  <HomeIcon />
+                  <HomeIcon sx={{ fontSize: 28 }} />
                 </Box>
                 <Box>
-                  <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                  <Typography variant="h5" sx={{ fontWeight: 700, mb: 1 }}>
                     Property Details
                   </Typography>
-                  <Typography variant="body2" color="text.secondary">
+                  <Typography variant="body1" color="text.secondary" sx={{ fontSize: '1.1rem' }}>
                     Provide accurate information for the best estimate
                   </Typography>
                 </Box>
@@ -514,13 +589,13 @@ const UserPrediction: React.FC = () => {
               </Collapse>
 
               <Box component="form" onSubmit={handleSubmit}>
-                <Grid container spacing={3}>
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
                   {Object.entries(fieldMeta).map(([key, meta], index) => {
                     const fieldKey = key as keyof PredictionRequest;
                     const isCompleted = completedFields.has(fieldKey);
                     
                     return (
-                      <Grid item xs={12} sm={6} key={key}>
+                      <Box key={key}>
                         <Tooltip title={meta.tip} arrow placement="top">
                           <TextField
                             label={meta.label}
@@ -565,29 +640,54 @@ const UserPrediction: React.FC = () => {
                             }}
                             sx={{
                               '& .MuiOutlinedInput-root': {
-                                borderRadius: 2,
+                                borderRadius: 3,
                                 transition: 'all 0.3s ease',
+                                background: theme.palette.mode === 'dark' 
+                                  ? 'rgba(255, 255, 255, 0.03)' 
+                                  : 'rgba(0, 0, 0, 0.02)',
+                                backdropFilter: 'blur(10px)',
+                                '&:hover': {
+                                  background: theme.palette.mode === 'dark' 
+                                    ? 'rgba(255, 255, 255, 0.06)' 
+                                    : 'rgba(0, 0, 0, 0.04)',
+                                  transform: 'translateY(-2px)',
+                                  boxShadow: `0 4px 20px ${theme.palette.primary.main}20`,
+                                },
                                 '&:hover fieldset': {
                                   borderColor: theme.palette.primary.main,
                                   borderWidth: 2,
+                                },
+                                '&.Mui-focused': {
+                                  background: theme.palette.mode === 'dark' 
+                                    ? 'rgba(255, 255, 255, 0.08)' 
+                                    : 'rgba(0, 0, 0, 0.06)',
+                                  transform: 'translateY(-1px)',
+                                  boxShadow: `0 2px 15px ${theme.palette.primary.main}30`,
                                 },
                                 '&.Mui-focused fieldset': {
                                   borderColor: theme.palette.primary.main,
                                   borderWidth: 2,
                                 },
                               },
+                              '& .MuiInputLabel-root': {
+                                fontWeight: 500,
+                                color: theme.palette.text.secondary,
+                              },
+                              '& .MuiInputLabel-root.Mui-focused': {
+                                color: theme.palette.primary.main,
+                                fontWeight: 600,
+                              },
                               animationDelay: `${index * 100}ms`,
                             }}
                             className="fade-in-up"
                           />
                         </Tooltip>
-                      </Grid>
+                      </Box>
                     );
                   })}
 
                   {/* Action Buttons */}
-                  <Grid item xs={12}>
-                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 2 }}>
+                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 2 }}>
                       <Button 
                         type="submit" 
                         variant="contained" 
@@ -596,11 +696,14 @@ const UserPrediction: React.FC = () => {
                         startIcon={loadingState === 'loading' ? <CircularProgress size={20} /> : <TrendingUpIcon />}
                         className="btn-glow"
                         sx={{ 
-                          py: 2,
-                          borderRadius: 2,
-                          fontSize: '1.1rem',
-                          fontWeight: 600,
+                          py: 2.5,
+                          px: 4,
+                          borderRadius: 3,
+                          fontSize: '1.2rem',
+                          fontWeight: 700,
                           background: `linear-gradient(135deg, ${theme.palette.primary.main}, ${theme.palette.primary.dark})`,
+                          boxShadow: `0 4px 20px ${theme.palette.primary.main}40`,
+                          transition: 'all 0.3s ease',
                           '&:hover': {
                             transform: 'translateY(-2px)',
                             boxShadow: '0 8px 25px rgba(25, 118, 210, 0.3)',
@@ -628,9 +731,8 @@ const UserPrediction: React.FC = () => {
                       >
                         Reset Form
                       </Button>
-                    </Box>
-                  </Grid>
-                </Grid>
+                  </Box>
+                </Box>
               </Box>
 
               {/* Prediction Result */}
@@ -720,6 +822,7 @@ const UserPrediction: React.FC = () => {
             </Paper>
           </Grid>
         </Grid>
+        )}
       </Box>
     </Box>
   );
