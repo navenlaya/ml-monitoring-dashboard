@@ -345,27 +345,4 @@ npm run build
 - **[API Documentation](http://localhost:8000/docs)**: Interactive API reference
 - **Component Documentation**: Frontend component usage examples
 
-## Contributing
-
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Add tests and documentation
-5. Submit a pull request
-
-## License
-
-This project is licensed under the MIT License - see the LICENSE file for details.
-
-## Support
-
-For issues and questions:
-1. Check the troubleshooting section
-2. Review the logs and error messages
-3. Consult the API documentation
-4. Open an issue with detailed information
-
----
-
-**Congratulations!** Your ML monitoring dashboard is now ready with enterprise-grade features, real-time analytics, and production deployment capabilities.
 
