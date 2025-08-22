@@ -145,7 +145,7 @@ const Navigation: React.FC = () => {
       
       <Box sx={{ p: 2 }}>
         <Typography variant="body2" color="text.secondary" align="center">
-          © 2024 ML Monitoring Dashboard
+          © 2025 House Price Predictor and Monitoring Dashboard
         </Typography>
         <Typography variant="caption" color="text.secondary" align="center" display="block">
           Built with React + TypeScript + Material-UI
@@ -202,7 +202,7 @@ const Navigation: React.FC = () => {
                   display: { xs: 'none', sm: 'block' },
                 }}
               >
-                ML Monitoring Dashboard
+                House Price Predictor and Monitoring Dashboard
               </Typography>
               <Typography 
                 variant="body2" 
@@ -401,7 +401,7 @@ const AppContent: React.FC = () => {
                   mb: 1,
                 }}
               >
-                ML Monitoring Dashboard
+                House Price Predictor and Monitoring Dashboard
               </Typography>
               <Typography 
                 variant="body2" 
@@ -444,7 +444,7 @@ const AppContent: React.FC = () => {
                 align="center"
                 sx={{ fontSize: '0.75rem' }}
               >
-                © 2024 ML Monitoring Dashboard. Built with modern web technologies.
+                © 2025 House Price Predictor and Monitoring Dashboard. Built with modern web technologies.
               </Typography>
             </Box>
           </Box>

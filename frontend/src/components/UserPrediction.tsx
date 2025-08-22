@@ -118,10 +118,9 @@ const UserPrediction: React.FC = () => {
       placeholder: '8.5 (for $85,000)',
     },
     HouseAge: { 
-      label: 'House Age', 
+      label: 'House Age (years)', 
       tip: 'Median house age in years', 
       icon: <HomeIcon fontSize="small" />,
-      unit: 'years',
       min: 0,
       max: 100,
       step: 1,
@@ -155,10 +154,9 @@ const UserPrediction: React.FC = () => {
       placeholder: '1500',
     },
     AveOccup: { 
-      label: 'Average Occupancy', 
+      label: 'Average Occupancy (people/household)', 
       tip: 'Average number of household members', 
       icon: <PeopleIcon fontSize="small" />,
-      unit: 'people/household',
       min: 0,
       max: 20,
       step: 0.1,
@@ -417,7 +415,7 @@ const UserPrediction: React.FC = () => {
             Enter your property details below to receive an accurate market valuation estimate.
           </Typography>
 
-          {/* Progress indicator */}
+          {/* Progress indicator
           {showProgress && (
             <Fade in={showProgress} timeout={500}>
               <Box sx={{ maxWidth: 400, mx: 'auto' }}>
@@ -447,7 +445,7 @@ const UserPrediction: React.FC = () => {
                 </Typography>
               </Box>
             </Fade>
-          )}
+          )} */}
 
           {/* Tabs for different input methods */}
           <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 4, mt: 4 }}>
